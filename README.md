@@ -4,6 +4,31 @@ Pieni OEM‑käyttöönottoavustin distroille, joista puuttuu valmis OEM‑asenn
 
 Ideana on, että käyttäjä luo ensimmäisellä bootilla oman tilinsä ja kielen, ilman ylimääräistä säätöä.
 
+## Seuraavan sukupolven versio
+
+Repoon on aloitettu C++/Qt/QML-pohjainen tuotetason versio nykyisen
+bash/zenity-toteutuksen rinnalle.
+
+Nykyinen kehitysrakenne:
+
+* `src/gui` — Qt/QML wizard mock-backendillä
+* `src/helper` — tuleva root-helper, nyt validointi- ja protokollastubina
+* `src/common` — jaettu syötevalidointi
+* `data` — desktop-, polkit-, systemd- ja oletuskonfiguraatiot
+* `docs` — arkkitehtuuri-, koodaustyyli-, tietoturva- ja testausmuistiot
+
+Kehitys tapahtuu Nix-kehitysympäristössä:
+
+```bash
+nix develop
+just build
+just run
+just check
+```
+
+Ensimmäinen C++-milestone keskittyy GUI/UX-polkuun. Root-toiminnot portataan
+myöhemmin helperiin nykyisestä `usr/local/sbin/oem-setup-apply.sh`-logiikasta.
+
 ## Käyttö
 1. Kopioi `oem-setup` asennettuun järjestelmään.
 2. Siirry kansioon:
