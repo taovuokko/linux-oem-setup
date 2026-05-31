@@ -8,6 +8,7 @@ WizardFrame {
     title: qsTr("Tarkista tiedot")
     subtitle: qsTr("Kun jatkat, käyttäjä luodaan ja väliaikainen setup-tila poistetaan.")
     illustration: "../assets/done.svg"
+    step: 3
     signal apply()
 
     ColumnLayout {

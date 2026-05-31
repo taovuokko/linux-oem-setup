@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import OemSetup
 import "pages"
 
@@ -8,80 +7,153 @@ ApplicationWindow {
     id: window
     width: 980
     height: 680
-    minimumWidth: 720
-    minimumHeight: 520
+    minimumWidth: 740
+    minimumHeight: 540
     visible: true
     title: qsTr("OEM Setup")
-    color: "#f5f2ec"
 
-    property int pageIndex: 0
-
-    function goNext() {
-        if (pageIndex === 1 && !oemSetup.validateNamePage())
-            return
-        if (pageIndex === 2 && !oemSetup.validateLanguagePage())
-            return
-        if (pageIndex === 3 && !oemSetup.validatePasswordPage())
-            return
-        pageIndex = Math.min(pageIndex + 1, stack.count - 1)
-    }
-
-    function goBack() {
-        oemSetup.clearError()
-        pageIndex = Math.max(pageIndex - 1, 0)
+    background: Rectangle {
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#eeeae4" }
+            GradientStop { position: 1.0; color: "#e0e7eb" }
+        }
     }
 
     Connections {
         target: oemSetup
         function onApplySucceeded() {
-            pageIndex = 6
+            stack.replace(null, doneComp)
         }
         function onApplyFailed() {
-            pageIndex = 7
+            stack.pop()
+            stack.push(errorComp)
         }
     }
 
-    Rectangle {
-        anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#f7f4ef" }
-            GradientStop { position: 1.0; color: "#e8edf0" }
-        }
-    }
-
-    StackLayout {
+    StackView {
         id: stack
         anchors.fill: parent
-        currentIndex: window.pageIndex
+        clip: true
 
+        pushEnter: Transition {
+            ParallelAnimation {
+                NumberAnimation {
+                    property: "x"
+                    from: stack.width * 0.07; to: 0
+                    duration: 260; easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0; to: 1
+                    duration: 220; easing.type: Easing.OutCubic
+                }
+            }
+        }
+        pushExit: Transition {
+            ParallelAnimation {
+                NumberAnimation {
+                    property: "x"
+                    from: 0; to: -stack.width * 0.07
+                    duration: 260; easing.type: Easing.OutCubic
+                }
+                NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 180 }
+            }
+        }
+        popEnter: Transition {
+            ParallelAnimation {
+                NumberAnimation {
+                    property: "x"
+                    from: -stack.width * 0.07; to: 0
+                    duration: 260; easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0; to: 1
+                    duration: 220; easing.type: Easing.OutCubic
+                }
+            }
+        }
+        popExit: Transition {
+            ParallelAnimation {
+                NumberAnimation {
+                    property: "x"
+                    from: 0; to: stack.width * 0.07
+                    duration: 260; easing.type: Easing.OutCubic
+                }
+                NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 180 }
+            }
+        }
+        replaceEnter: Transition {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 300; easing.type: Easing.OutCubic }
+        }
+        replaceExit: Transition {
+            NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 200 }
+        }
+
+        initialItem: welcomeComp
+    }
+
+    Component {
+        id: welcomeComp
         WelcomePage {
-            onNext: window.goNext()
+            onNext: stack.push(nameComp)
         }
+    }
+
+    Component {
+        id: nameComp
         NamePage {
-            onBack: window.goBack()
-            onNext: window.goNext()
+            onBack: stack.pop()
+            onNext: { if (oemSetup.validateNamePage()) stack.push(languageComp) }
         }
+    }
+
+    Component {
+        id: languageComp
         LanguagePage {
-            onBack: window.goBack()
-            onNext: window.goNext()
+            onBack: stack.pop()
+            onNext: { if (oemSetup.validateLanguagePage()) stack.push(passwordComp) }
         }
+    }
+
+    Component {
+        id: passwordComp
         PasswordPage {
-            onBack: window.goBack()
-            onNext: window.goNext()
+            onBack: stack.pop()
+            onNext: { if (oemSetup.validatePasswordPage()) stack.push(confirmComp) }
         }
+    }
+
+    Component {
+        id: confirmComp
         ConfirmPage {
-            onBack: window.goBack()
+            onBack: {
+                oemSetup.clearError()
+                stack.pop()
+            }
             onApply: {
-                pageIndex = 5
+                stack.push(progressComp)
                 oemSetup.apply()
             }
         }
+    }
+
+    Component {
+        id: progressComp
         ProgressPage {}
+    }
+
+    Component {
+        id: doneComp
         DonePage {}
+    }
+
+    Component {
+        id: errorComp
         ErrorPage {
             onBack: {
                 oemSetup.clearError()
-                pageIndex = 4
+                stack.pop()
             }
         }
     }

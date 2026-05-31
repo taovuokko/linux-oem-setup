@@ -8,6 +8,7 @@ WizardFrame {
     title: qsTr("Luo salasana")
     subtitle: qsTr("Valitse salasana, jolla kirjaudut sisään.")
     illustration: "../assets/welcome.svg"
+    step: 2
 
     ColumnLayout {
         anchors.fill: parent

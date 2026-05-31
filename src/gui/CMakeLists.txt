@@ -16,6 +16,7 @@ qt_add_qml_module(oem-setup-gui
         qml/components/WizardFrame.qml
         qml/components/PrimaryButton.qml
         qml/components/SecondaryButton.qml
+        qml/components/StepIndicator.qml
         qml/components/TextFieldCard.qml
         qml/pages/WelcomePage.qml
         qml/pages/NamePage.qml

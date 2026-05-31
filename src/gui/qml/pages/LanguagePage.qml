@@ -8,6 +8,7 @@ WizardFrame {
     title: qsTr("Valitse kieli")
     subtitle: qsTr("Kieli asetetaan järjestelmän oletukseksi.")
     illustration: "../assets/welcome.svg"
+    step: 1
 
     ListModel {
         id: languages

@@ -33,7 +33,7 @@
             shellHook = ''
               export CMAKE_GENERATOR=Ninja
               export QML_IMPORT_PATH="${pkgs.qt6.qtdeclarative}/lib/qt-6/qml"
-              export QT_PLUGIN_PATH="${pkgs.qt6.qtbase}/lib/qt-6/plugins"
+              export QT_PLUGIN_PATH="${pkgs.qt6.qtbase}/lib/qt-6/plugins:${pkgs.qt6.qtsvg}/lib/qt-6/plugins"
             '';
           };
         });

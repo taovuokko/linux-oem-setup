@@ -8,6 +8,7 @@ WizardFrame {
     title: qsTr("Kuka käyttää tätä tietokonetta?")
     subtitle: qsTr("Nimi näkyy kirjautumisruudussa ja käyttäjäasetuksissa.")
     illustration: "../assets/welcome.svg"
+    step: 0
 
     ColumnLayout {
         anchors.fill: parent
