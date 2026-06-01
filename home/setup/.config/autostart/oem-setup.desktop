@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Name=OEM Setup
-Exec=/usr/local/bin/oem-setup.sh
+Exec=/usr/bin/oem-setup-gui
 X-GNOME-Autostart-enabled=true
 NoDisplay=true

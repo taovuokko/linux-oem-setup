@@ -1,5 +1,5 @@
 #!/bin/bash
-# install-generic.sh 
+# install-generic.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,7 +13,7 @@ fi
 
 # Tarkista riippuvuudet (ja yritä asentaa)
 MISSING=""
-for cmd in zenity sudo visudo systemctl chpasswd usermod; do
+for cmd in pkexec systemctl chpasswd usermod; do
     command -v "$cmd" &>/dev/null || MISSING="$MISSING $cmd"
 done
 # adduser (Debian) tai useradd (muu)
@@ -23,8 +23,6 @@ fi
 
 PKGS=""
 if [ -n "$MISSING" ] && command -v apt-get &>/dev/null; then
-    case " $MISSING " in *" zenity "*) PKGS="$PKGS zenity" ;; esac
-    case " $MISSING " in *" sudo "*|*" visudo "*) PKGS="$PKGS sudo" ;; esac
     case " $MISSING " in *" systemctl "*) PKGS="$PKGS systemd" ;; esac
     case " $MISSING " in *" chpasswd "*|*" usermod "*|*" adduser/useradd "*) PKGS="$PKGS passwd" ;; esac
     # polkitd uudemmissa Debian/Ubuntu-versioissa, policykit-1 vanhemmissa
@@ -40,7 +38,7 @@ fi
 
 # Uusi tarkistus
 MISSING=""
-for cmd in zenity sudo visudo systemctl chpasswd usermod; do
+for cmd in pkexec systemctl chpasswd usermod; do
     command -v "$cmd" &>/dev/null || MISSING="$MISSING $cmd"
 done
 if ! command -v adduser &>/dev/null && ! command -v useradd &>/dev/null; then
@@ -52,14 +50,14 @@ if [ -n "$MISSING" ]; then
         echo "Yritettiin asentaa paketit:$PKGS" >&2
     fi
     echo "Asenna puuttuvat paketit ennen asennusta." >&2
-    echo "Esim. Debian/Ubuntu: apt install zenity sudo polkitd systemd passwd" >&2
+    echo "Esim. Debian/Ubuntu: apt install polkitd systemd passwd" >&2
     exit 1
 fi
 
-OEM_CONFIG="/etc/default/oem-setup"
+OEM_CONFIG="/etc/oem-setup/oem-setup.conf"
 if [ -z "${SETUP_USER+x}" ] && [ -r "$OEM_CONFIG" ]; then
-    # shellcheck disable=SC1090
-    . "$OEM_CONFIG"
+    _val="$(grep '^setup_user=' "$OEM_CONFIG" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]')"
+    [ -n "$_val" ] && SETUP_USER="$_val"
 fi
 SETUP_USER="${SETUP_USER:-setup}"
 SETUP_HOME="/home/$SETUP_USER"
@@ -86,19 +84,12 @@ fi
 # ennen install.sh:n ajamista.
 
 install_oem_config() {
+    mkdir -p /etc/oem-setup
     cat > "$OEM_CONFIG" << EOF
-SETUP_USER="$SETUP_USER"
+setup_user=$SETUP_USER
+allowed_locales=fi_FI.UTF-8;sv_SE.UTF-8;en_GB.UTF-8;en_US.UTF-8
 EOF
     chmod 644 "$OEM_CONFIG"
-}
-
-install_oem_sudoers() {
-    cat > /etc/sudoers.d/oem-setup << EOF
-# Sallii oem-setup-apply.sh:n ajon sudolla ilman salasanaa
-# Poistetaan automaattisesti oem-cleanup.sh:n toimesta
-$SETUP_USER ALL=(root) NOPASSWD: /usr/local/sbin/oem-setup-apply.sh
-EOF
-    chmod 440 /etc/sudoers.d/oem-setup
 }
 
 prepare_setup_user() {
@@ -232,22 +223,30 @@ echo "luomaan oman käyttäjätilinsä."
 echo ""
 echo "[*] Asennetaan..."
 
-# Binäärit
-install -m 700 usr/local/sbin/oem-setup-apply.sh /usr/local/sbin/
-install -m 755 usr/local/bin/oem-setup.sh         /usr/local/bin/
+# Tarkista rakennusartefaktit
+BUILD_DIR="$ROOT_DIR/build"
+if [ ! -f "$BUILD_DIR/src/gui/oem-setup-gui" ] || \
+   [ ! -f "$BUILD_DIR/src/helper/oem-setup-helper" ]; then
+    echo "Virhe: C++-binäärit puuttuvat. Rakenna ensin:" >&2
+    echo "  cmake -B build -G Ninja && cmake --build build" >&2
+    exit 1
+fi
 
-# PolicyKit
+# GUI ja helper-binääri
+install -m 755 "$BUILD_DIR/src/gui/oem-setup-gui" /usr/bin/
+mkdir -p /usr/libexec/oem-setup
+install -m 755 "$BUILD_DIR/src/helper/oem-setup-helper" /usr/libexec/oem-setup/
+
+# PolicyKit (polkitd lukee /etc/polkit-1/actions/)
 mkdir -p /etc/polkit-1/actions
-install -m 644 etc/polkit-1/actions/fi.local.oem-setup.policy \
-    /etc/polkit-1/actions/
+install -m 644 data/polkit/fi.local.oem-setup.policy /etc/polkit-1/actions/
 
-# Sudoers sallii setup-käyttäjän ajaa apply-skriptin sudolla
-# ilman salasanaa (setup-tilillä ei ole salasanaa)
-mkdir -p /etc/sudoers.d
-install_oem_sudoers
-visudo -cf /etc/sudoers.d/oem-setup
+# Cleanup-systemd-palvelu
+mkdir -p /usr/lib/systemd/system
+install -m 644 data/systemd/oem-cleanup.service /usr/lib/systemd/system/
+systemctl daemon-reload
 
-mkdir -p /etc/default
+# Konfiguraatiotiedosto
 install_oem_config
 
 # Setup-käyttäjä: luo VAIN jos ei ole olemassa.
@@ -274,7 +273,7 @@ fi
 
 # Autostart
 mkdir -p "$SETUP_HOME/.config/autostart"
-install -m 644 home/setup/.config/autostart/oem-setup.desktop \
+install -m 644 data/desktop/oem-setup.desktop \
     "$SETUP_HOME/.config/autostart/"
 chown -R "$SETUP_USER:$SETUP_USER" "$SETUP_HOME/.config"
 

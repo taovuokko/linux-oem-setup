@@ -2,12 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../animations"
 
 WizardFrame {
-    eyebrow: qsTr("Vaihe 3 / 4")
+    eyebrow: qsTr("Suojaus")
     title: qsTr("Luo salasana")
     subtitle: qsTr("Valitse salasana, jolla kirjaudut sisään.")
-    illustration: "../assets/welcome.svg"
+    illustrationComponent: Component { PasswordAnimation {} }
     step: 2
 
     ColumnLayout {
@@ -18,7 +19,7 @@ WizardFrame {
             Layout.fillWidth: true
             label: qsTr("Salasana")
             placeholderText: qsTr("Kirjoita salasana")
-            echoMode: TextInput.Password
+            showToggle: true
             text: oemSetup.password
             onTextChanged: oemSetup.password = text
             onAccepted: next()
@@ -29,7 +30,7 @@ WizardFrame {
             label: qsTr("Salasana uudelleen")
             placeholderText: qsTr("Kirjoita sama salasana")
             supportingText: qsTr("Salasanaa ei pakoteta tiettyyn pituuteen.")
-            echoMode: TextInput.Password
+            showToggle: true
             text: oemSetup.passwordConfirmation
             onTextChanged: oemSetup.passwordConfirmation = text
             onAccepted: next()

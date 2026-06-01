@@ -2,6 +2,7 @@
 
 #include "Validation.h"
 
+#include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>
@@ -18,21 +19,63 @@ void OemSetupController::setDisplayName(const QString& value)
 {
     const QString trimmed = value.trimmed();
     if (m_displayName == trimmed) {
+        if (value != trimmed) emit displayNameChanged(); // re-normalize QML field
         return;
     }
 
     m_displayName = trimmed;
-    const QString nextUsername = OemSetup::deriveUsername(m_displayName);
-    const bool usernameChangedNow = nextUsername != m_username;
-    m_username = nextUsername;
-
     emit displayNameChanged();
-    if (usernameChangedNow) {
-        emit usernameChanged();
+
+    if (!m_usernameManuallyEdited) {
+        const QString derived = OemSetup::deriveUsername(m_displayName);
+        if (derived != m_username) {
+            m_username = derived;
+            emit usernameChanged();
+        }
     }
 }
 
 QString OemSetupController::username() const { return m_username; }
+
+void OemSetupController::setUsername(const QString& raw)
+{
+    // Filter: lowercase, only [a-z0-9_-], max 32 chars
+    QString filtered;
+    filtered.reserve(qMin(raw.size(), 32));
+    for (const QChar c : raw.toLower()) {
+        if (filtered.size() == 32) break;
+        if ((c >= u'a' && c <= u'z') || (c >= u'0' && c <= u'9') || c == u'_' || c == u'-')
+            filtered += c;
+    }
+
+    const bool wasManual = m_usernameManuallyEdited;
+    m_usernameManuallyEdited = (filtered != OemSetup::deriveUsername(m_displayName));
+
+    if (m_username == filtered && wasManual == m_usernameManuallyEdited)
+        return;
+
+    m_username = filtered;
+    emit usernameChanged();
+    if (wasManual != m_usernameManuallyEdited)
+        emit usernameManuallyEditedChanged();
+}
+
+bool OemSetupController::usernameManuallyEdited() const { return m_usernameManuallyEdited; }
+
+void OemSetupController::resetUsernameToAutomatic()
+{
+    if (!m_usernameManuallyEdited)
+        return;
+
+    const QString derived = OemSetup::deriveUsername(m_displayName);
+    const bool nameChanged = (m_username != derived);
+
+    m_username = derived;
+    m_usernameManuallyEdited = false;
+
+    if (nameChanged) emit usernameChanged();
+    emit usernameManuallyEditedChanged();
+}
 
 QString OemSetupController::locale() const { return m_locale; }
 
@@ -96,13 +139,13 @@ bool OemSetupController::validateNamePage()
 {
     const auto nameResult = OemSetup::validateDisplayName(m_displayName);
     if (!nameResult.ok) {
-        setError(QStringLiteral("Tarkista nimi"), nameResult.message);
+        setError(tr("Tarkista nimi"), nameResult.message);
         return false;
     }
 
     const auto usernameResult = OemSetup::validateUsername(m_username);
     if (!usernameResult.ok) {
-        setError(QStringLiteral("Tunnusta ei voi muodostaa"), usernameResult.message);
+        setError(tr("Tunnusta ei voi muodostaa"), usernameResult.message);
         return false;
     }
 
@@ -114,7 +157,7 @@ bool OemSetupController::validateLanguagePage()
 {
     const auto localeResult = OemSetup::validateLocale(m_locale);
     if (!localeResult.ok) {
-        setError(QStringLiteral("Tarkista kieli"), localeResult.message);
+        setError(tr("Tarkista kieli"), localeResult.message);
         return false;
     }
     clearError();
@@ -124,12 +167,12 @@ bool OemSetupController::validateLanguagePage()
 bool OemSetupController::validatePasswordPage()
 {
     if (m_password.isEmpty()) {
-        setError(QStringLiteral("Kirjoita salasana"), QStringLiteral("Salasana voi olla lyhyt, mutta se ei voi olla tyhjä."));
+        setError(tr("Kirjoita salasana"), tr("Salasana voi olla lyhyt, mutta se ei voi olla tyhjä."));
         return false;
     }
 
     if (m_password != m_passwordConfirmation) {
-        setError(QStringLiteral("Salasanat eivät täsmää"), QStringLiteral("Kirjoita sama salasana molempiin kenttiin."));
+        setError(tr("Salasanat eivät täsmää"), tr("Kirjoita sama salasana molempiin kenttiin."));
         return false;
     }
 
@@ -142,11 +185,14 @@ bool OemSetupController::validateAll()
     return validateNamePage() && validateLanguagePage() && validatePasswordPage();
 }
 
-void OemSetupController::apply()
+bool OemSetupController::apply()
 {
-    if (m_busy || !validateAll()) {
-        emit applyFailed();
-        return;
+    if (m_busy) {
+        return false;
+    }
+
+    if (!validateAll()) {
+        return false;
     }
 
     setBusy(true);
@@ -157,7 +203,7 @@ void OemSetupController::apply()
             clearError();
             emit applySucceeded();
         });
-        return;
+        return true;
     }
 
     QJsonObject payload;
@@ -174,20 +220,18 @@ void OemSetupController::apply()
         m_helperProcess->deleteLater();
         m_helperProcess = nullptr;
 
-        // Best-effort: clear password from memory after use
-        m_password.clear();
-        emit passwordChanged();
-
         setBusy(false);
 
         if (exitStatus == QProcess::NormalExit && exitCode == 0) {
+            m_password.clear();   // clear only on success — retry needs the value
+            emit passwordChanged();
             clearError();
             emit applySucceeded();
         } else {
-            setError(QStringLiteral("Käyttöönotto epäonnistui"),
-                     QStringLiteral("Tilin luominen ei onnistunut. "
-                                    "Tarkista, että sinulla on riittävät oikeudet."));
-            emit applyFailed();
+            setError(tr("Käyttöönotto epäonnistui"),
+                     tr("Tilin luominen ei onnistunut. "
+                        "Tarkista, että sinulla on riittävät oikeudet."));
+            emit applyRuntimeFailed();
         }
     });
 
@@ -198,14 +242,46 @@ void OemSetupController::apply()
         m_helperProcess->deleteLater();
         m_helperProcess = nullptr;
         setBusy(false);
-        setError(QStringLiteral("Käyttöönotto epäonnistui"),
-                 QStringLiteral("Helper-prosessin käynnistys epäonnistui."));
-        emit applyFailed();
-        return;
+        setError(tr("Käyttöönotto epäonnistui"),
+                 tr("Helper-prosessin käynnistys epäonnistui."));
+        QTimer::singleShot(0, this, [this]() { emit applyRuntimeFailed(); });
+        return true;
     }
 
     m_helperProcess->write(json);
     m_helperProcess->closeWriteChannel();
+    return true;
+}
+
+QString OemSetupController::uiLanguage() const { return m_uiLanguage; }
+
+void OemSetupController::setUiLanguage(const QString& lang)
+{
+    if (m_uiLanguage == lang)
+        return;
+
+    QCoreApplication::removeTranslator(&m_translator);
+
+    if (lang != QLatin1String("fi")) {
+        const QString path = QStringLiteral(":/i18n/oem-setup_") + lang + QStringLiteral(".qm");
+        if (!m_translator.load(path)) {
+            return; // translation file missing — keep current language
+        }
+        QCoreApplication::installTranslator(&m_translator);
+    }
+
+    m_uiLanguage = lang;
+    emit uiLanguageChanged();
+}
+
+void OemSetupController::reboot()
+{
+    if (m_mockMode) {
+        QCoreApplication::quit();
+        return;
+    }
+    QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("reboot")});
+    QCoreApplication::quit();
 }
 
 void OemSetupController::clearError()

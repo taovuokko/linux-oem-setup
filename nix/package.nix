@@ -6,6 +6,7 @@
 , qtbase
 , qtdeclarative
 , qtsvg
+, qttools
 , wrapQtAppsHook
 }:
 
@@ -19,6 +20,7 @@ stdenv.mkDerivation {
     cmake
     ninja
     pkg-config
+    qttools
     wrapQtAppsHook
   ];
 

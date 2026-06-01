@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build AppImage
+        run: |
+          nix build .#appimage -o result
+          cp -L result oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage
+          chmod +x oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage
+          generate_release_notes: true
+          body: |
+            ## Asennus
+
+            ```bash
+            chmod +x oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage
+            sudo ./oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage --install --setup-user=setup
+            ```
+
+            `--setup-user` on sen väliaikaisen käyttäjän nimi jolle autologin on konfiguroitu (oletus: `setup`).

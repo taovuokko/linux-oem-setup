@@ -1,5 +1,6 @@
 #include "Validation.h"
 
+#include <QCoreApplication>
 #include <QRegularExpression>
 #include <QStringList>
 
@@ -61,10 +62,13 @@ ValidationResult validateDisplayName(const QString& displayName)
 {
     const QString trimmed = trimName(displayName);
     if (trimmed.isEmpty()) {
-        return {false, QStringLiteral("Kirjoita nimi.")};
+        return {false, QCoreApplication::translate("Validation", "Kirjoita nimi.")};
     }
-    if (trimmed.contains(u':')) {
-        return {false, QStringLiteral("Nimessä ei voi olla kaksoispistettä.")};
+    if (trimmed.size() > 128) {
+        return {false, QCoreApplication::translate("Validation", "Nimi on liian pitkä.")};
+    }
+    if (trimmed.contains(u':') || trimmed.contains(u',')) {
+        return {false, QCoreApplication::translate("Validation", "Nimessä ei voi olla kaksoispistettä tai pilkkua.")};
     }
 
     for (const QChar ch : trimmed) {
@@ -74,7 +78,7 @@ ValidationResult validateDisplayName(const QString& displayName)
             category == QChar::Other_Format ||
             category == QChar::Separator_Line ||
             category == QChar::Separator_Paragraph) {
-            return {false, QStringLiteral("Nimi sisältää näkymättömiä tai ohjausmerkkejä.")};
+            return {false, QCoreApplication::translate("Validation", "Nimi sisältää näkymättömiä tai ohjausmerkkejä.")};
         }
     }
 
@@ -85,7 +89,7 @@ ValidationResult validateUsername(const QString& username)
 {
     static const QRegularExpression pattern(QStringLiteral("^[a-z][a-z0-9_-]{0,31}$"));
     if (!pattern.match(username).hasMatch()) {
-        return {false, QStringLiteral("Käyttäjätunnuksen täytyy alkaa kirjaimella ja olla enintään 32 merkkiä.")};
+        return {false, QCoreApplication::translate("Validation", "Käyttäjätunnuksen täytyy alkaa kirjaimella ja olla enintään 32 merkkiä.")};
     }
     return {true, {}};
 }

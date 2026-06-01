@@ -1,5 +1,7 @@
 qt_add_executable(oem-setup-gui
     main.cpp
+    Installer.cpp
+    Installer.h
     OemSetupController.cpp
     OemSetupController.h
 )
@@ -13,6 +15,10 @@ qt_add_qml_module(oem-setup-gui
     VERSION 1.0
     QML_FILES
         qml/Main.qml
+        qml/animations/WelcomeAnimation.qml
+        qml/animations/NameAnimation.qml
+        qml/animations/LanguageAnimation.qml
+        qml/animations/PasswordAnimation.qml
         qml/components/WizardFrame.qml
         qml/components/PrimaryButton.qml
         qml/components/SecondaryButton.qml
@@ -27,11 +33,19 @@ qt_add_qml_module(oem-setup-gui
         qml/pages/DonePage.qml
         qml/pages/ErrorPage.qml
     RESOURCES
+        qml/animations/qmldir
         qml/components/qmldir
         qml/pages/qmldir
         qml/assets/welcome.svg
         qml/assets/done.svg
         qml/assets/error.svg
+)
+
+find_package(Qt6 REQUIRED COMPONENTS LinguistTools)
+
+qt_add_translations(oem-setup-gui
+    TS_FILES "${CMAKE_SOURCE_DIR}/translations/oem-setup_en.ts"
+    RESOURCE_PREFIX "/i18n"
 )
 
 target_link_libraries(oem-setup-gui

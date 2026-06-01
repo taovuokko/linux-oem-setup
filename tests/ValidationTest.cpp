@@ -18,6 +18,8 @@ private slots:
     void validateDisplayName_valid();
     void validateDisplayName_emptyFails();
     void validateDisplayName_colonFails();
+    void validateDisplayName_commaFails();
+    void validateDisplayName_tooLongFails();
     void validateDisplayName_controlCharFails();
     void validateDisplayName_bidiOverrideFails();
 
@@ -87,6 +89,17 @@ void ValidationTest::validateDisplayName_emptyFails()
 void ValidationTest::validateDisplayName_colonFails()
 {
     QVERIFY(!OemSetup::validateDisplayName(QStringLiteral("user:name")).ok);
+}
+
+void ValidationTest::validateDisplayName_commaFails()
+{
+    QVERIFY(!OemSetup::validateDisplayName(QStringLiteral("Etu,Suku")).ok);
+}
+
+void ValidationTest::validateDisplayName_tooLongFails()
+{
+    QVERIFY(!OemSetup::validateDisplayName(QString(129, u'a')).ok);
+    QVERIFY(OemSetup::validateDisplayName(QString(128, u'a')).ok);
 }
 
 void ValidationTest::validateDisplayName_controlCharFails()

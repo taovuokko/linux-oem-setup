@@ -3,9 +3,11 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-appimage.url = "github:ralismark/nix-appimage";
+    nix-appimage.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, nix-appimage }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
@@ -27,6 +29,7 @@
               qt6.qtbase
               qt6.qtdeclarative
               qt6.qtsvg
+              qt6.qttools
               qt6.wrapQtAppsHook
             ];
 
@@ -41,9 +44,12 @@
       packages = forAllSystems (system:
         let
           pkgs = import nixpkgs { inherit system; };
+          default = pkgs.qt6Packages.callPackage ./nix/package.nix { };
         in
         {
-          default = pkgs.qt6Packages.callPackage ./nix/package.nix { };
+          inherit default;
+
+          appimage = nix-appimage.bundlers.${system}.default default;
         });
     };
 }
