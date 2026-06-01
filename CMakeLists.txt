@@ -27,6 +27,11 @@ install(FILES data/desktop/oem-setup.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
 )
 
+install(FILES src/gui/qml/assets/welcome.svg
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+    RENAME oem-setup.svg
+)
+
 install(FILES data/polkit/fi.local.oem-setup.policy
     DESTINATION ${CMAKE_INSTALL_DATADIR}/polkit-1/actions
 )
