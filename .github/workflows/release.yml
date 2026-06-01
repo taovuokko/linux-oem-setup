@@ -36,6 +36,17 @@ jobs:
           cmake --build build --parallel
           DESTDIR=AppDir cmake --install build
 
+          # Deploy OemSetup QML module to usr/qml/ so the runtime can find it.
+          # cmake installs only the binary; linuxdeploy only copies Qt's own modules.
+          # The "prefer :/qt/qml/OemSetup/" hint is stripped so Qt uses the
+          # filesystem copy directly (works regardless of QRC embedding).
+          mkdir -p AppDir/usr/qml/OemSetup
+          grep -v '^prefer ' build/src/gui/OemSetup/qmldir \
+            > AppDir/usr/qml/OemSetup/qmldir
+          cp -r build/src/gui/OemSetup/qml AppDir/usr/qml/OemSetup/
+          find build/src/gui -name "liboem-setup-guiplugin.so" \
+            -exec cp {} AppDir/usr/qml/OemSetup/ \; 2>/dev/null || true
+
       - name: Download linuxdeploy
         run: |
           curl -fsSLo linuxdeploy \
@@ -46,6 +57,7 @@ jobs:
 
       - name: Build AppImage
         env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
           QMAKE: /usr/bin/qmake6
           QML_SOURCES_PATHS: ${{ github.workspace }}/src/gui/qml
           OUTPUT: oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage

@@ -3,6 +3,8 @@
 
 #include <QDebug>
 #include <QCoreApplication>
+#include <QDir>
+#include <QFile>
 #include <QGuiApplication>
 #include <QPalette>
 #include <QQmlApplicationEngine>
@@ -71,7 +73,20 @@ int main(int argc, char* argv[])
     QObject::connect(&controller, &OemSetupController::uiLanguageChanged,
                      &engine,     &QQmlApplicationEngine::retranslate);
 
-    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/OemSetup/qml/Main.qml")));
+    // AppImage deployments with Qt 6.4 may not have QML embedded in QRC.
+    // Add the installed usr/qml/ path as a fallback import root.
+    engine.addImportPath(QDir::cleanPath(
+        QCoreApplication::applicationDirPath() + "/../qml"));
+
+    // Prefer QRC (fast, AOT) when available; fall back to filesystem module
+    // installed at usr/qml/OemSetup/ (AppImage / system package deployment).
+    const QString qrcRelPath = QStringLiteral("/qt/qml/OemSetup/qml/Main.qml");
+    const QUrl mainUrl = QFile::exists(QLatin1Char(':') + qrcRelPath)
+        ? QUrl(QStringLiteral("qrc") + qrcRelPath)
+        : QUrl::fromLocalFile(QDir::cleanPath(
+              QCoreApplication::applicationDirPath()
+              + "/../qml/OemSetup/qml/Main.qml"));
+    engine.load(mainUrl);
 
     if (engine.rootObjects().isEmpty()) {
         qCritical() << "OEM setup QML produced no root objects.";
