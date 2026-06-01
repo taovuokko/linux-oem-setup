@@ -19,13 +19,9 @@ static int fail(const QString& msg)
 
 static QString appBaseDir()
 {
-    // Running from AppImage: APPDIR points to the squashfs mount root,
-    // binaries are under $APPDIR/usr/
-    const QByteArray appdir = qgetenv("APPDIR");
-    if (!appdir.isEmpty())
-        return QString::fromLocal8Bit(appdir) + "/usr";
-
-    // Running from a cmake install tree: binary is at PREFIX/bin/oem-setup-gui
+    // nix-appimage stores files at Nix store paths, not under $APPDIR/usr/.
+    // applicationDirPath() resolves to PREFIX/bin/ in both a CMake install
+    // tree and inside a nix-appimage (extracted or FUSE-mounted).
     return QCoreApplication::applicationDirPath() + "/..";
 }
 
