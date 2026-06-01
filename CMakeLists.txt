@@ -37,7 +37,7 @@ install(FILES data/polkit/fi.local.oem-setup.policy
 )
 
 install(FILES data/systemd/oem-cleanup.service
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system
+    DESTINATION lib/systemd/system
 )
 
 install(FILES data/config/oem-setup.conf
