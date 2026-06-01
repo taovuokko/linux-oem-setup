@@ -115,12 +115,16 @@ int install(const QString& setupUser)
         return 1;
 
     // Autostart for setup user
+    // AppImages need --appimage-extract-and-run on systems without FUSE.
+    const QString execLine = appImagePath.isEmpty()
+        ? QStringLiteral("Exec=/usr/bin/oem-setup-gui")
+        : QStringLiteral("Exec=/usr/bin/oem-setup-gui --appimage-extract-and-run");
     const QString autostartDir = "/home/" + setupUser + "/.config/autostart";
     if (!writeFile(autostartDir + "/oem-setup.desktop",
                    "[Desktop Entry]\n"
                    "Type=Application\n"
                    "Name=OEM Setup\n"
-                   "Exec=/usr/bin/oem-setup-gui\n"
+                   + execLine + "\n"
                    "X-GNOME-Autostart-enabled=true\n"
                    "NoDisplay=true\n",
                    QFile::ReadOwner | QFile::WriteOwner |
