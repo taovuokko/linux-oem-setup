@@ -1,6 +1,8 @@
+#include "Installer.h"
 #include "OemSetupController.h"
 
 #include <QDebug>
+#include <QCoreApplication>
 #include <QGuiApplication>
 #include <QPalette>
 #include <QQmlApplicationEngine>
@@ -11,6 +13,20 @@
 
 int main(int argc, char* argv[])
 {
+    // --install must run before QGuiApplication — no display available under sudo
+    for (int i = 1; i < argc; ++i) {
+        if (qstrcmp(argv[i], "--install") == 0) {
+            QCoreApplication app(argc, argv);
+            QString setupUser = QStringLiteral("setup");
+            for (int j = i + 1; j < argc; ++j) {
+                const QString arg = QString::fromLocal8Bit(argv[j]);
+                if (arg.startsWith(QStringLiteral("--setup-user=")))
+                    setupUser = arg.mid(13);
+            }
+            return Installer::install(setupUser);
+        }
+    }
+
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("OEM Setup"));
     QGuiApplication::setOrganizationName(QStringLiteral("fi.local"));
@@ -51,6 +67,10 @@ int main(int argc, char* argv[])
             qWarning().noquote() << warning.toString();
         }
     });
+    // Retranslate all qsTr() bindings when UI language changes
+    QObject::connect(&controller, &OemSetupController::uiLanguageChanged,
+                     &engine,     &QQmlApplicationEngine::retranslate);
+
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/OemSetup/qml/Main.qml")));
 
     if (engine.rootObjects().isEmpty()) {

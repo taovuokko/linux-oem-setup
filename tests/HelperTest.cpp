@@ -14,6 +14,7 @@ struct Recorder {
     QList<RecordedCall> calls;
     QStringList passwordsReceived;
     QMap<QString, bool> failOn; // program name → fail this call
+    QSet<QString> failOnRemovePaths; // file path → fail removeFile for this path
 
     // Default: id("username") returns false (user doesn't exist)
     bool idReturnsUserExists = false;
@@ -40,7 +41,7 @@ struct Recorder {
             },
             .removeFile = [this](const QString& path) -> bool {
                 calls.append({QStringLiteral("removeFile"), {path}});
-                return true;
+                return !failOnRemovePaths.contains(path);
             },
         };
     }
@@ -49,6 +50,14 @@ struct Recorder {
     {
         return std::any_of(calls.cbegin(), calls.cend(),
             [&prog](const RecordedCall& c) { return c.program == prog; });
+    }
+
+    bool removedPath(const QString& path) const
+    {
+        return std::any_of(calls.cbegin(), calls.cend(),
+            [&path](const RecordedCall& c) {
+                return c.program == QStringLiteral("removeFile") && c.args.contains(path);
+            });
     }
 
     bool passwordWasInAnyArg() const
@@ -80,7 +89,6 @@ private slots:
     // --- validateRequest ---
     void validateRequest_acceptsValidInput();
     void validateRequest_rejectsEmptyName();
-    void validateRequest_rejectsMismatchedUsername();
     void validateRequest_rejectsUnknownLocale();
 
     // --- doApply ---
@@ -99,7 +107,9 @@ private slots:
     // --- doCleanup ---
     void cleanup_removesAutologinBeforeUser();
     void cleanup_failsAndRetainsUserWhenAutologinStuck();
+    void cleanup_failsAndRetainsUserWhenDropInRemovalFails();
     void cleanup_disablesServiceAtEnd();
+    void cleanup_removesAccountsServiceProfile();
 };
 
 // --- validateRequest ---
@@ -113,13 +123,6 @@ void HelperTest::validateRequest_rejectsEmptyName()
 {
     QJsonObject req = validRequest();
     req[QStringLiteral("displayName")] = QStringLiteral("");
-    QVERIFY(OemSetup::validateRequest(req) != 0);
-}
-
-void HelperTest::validateRequest_rejectsMismatchedUsername()
-{
-    QJsonObject req = validRequest();
-    req[QStringLiteral("username")] = QStringLiteral("notmatti");
     QVERIFY(OemSetup::validateRequest(req) != 0);
 }
 
@@ -257,6 +260,18 @@ void HelperTest::cleanup_failsAndRetainsUserWhenAutologinStuck()
     QVERIFY(!rec.wasCalled(QStringLiteral("userdel")));
 }
 
+void HelperTest::cleanup_failsAndRetainsUserWhenDropInRemovalFails()
+{
+    // If the drop-in config file (e.g. SDDM or LightDM) cannot be removed,
+    // cleanup must abort before deleting the setup user — otherwise the
+    // display manager would autologin to a deleted user on next boot.
+    Recorder rec;
+    rec.failOnRemovePaths.insert(
+        QStringLiteral("/etc/lightdm/lightdm.conf.d/50-oem-autologin.conf"));
+    QVERIFY(OemSetup::doCleanup(QStringLiteral("setup"), rec.makeOps()) != 0);
+    QVERIFY(!rec.wasCalled(QStringLiteral("userdel")));
+}
+
 void HelperTest::cleanup_disablesServiceAtEnd()
 {
     Recorder rec;
@@ -273,6 +288,14 @@ void HelperTest::cleanup_disablesServiceAtEnd()
     QVERIFY(userdelIdx != -1);
     QVERIFY(sysctlIdx != -1);
     QVERIFY(userdelIdx < sysctlIdx);
+}
+
+void HelperTest::cleanup_removesAccountsServiceProfile()
+{
+    Recorder rec;
+    QCOMPARE(OemSetup::doCleanup(QStringLiteral("setup"), rec.makeOps()), 0);
+    QVERIFY(rec.removedPath(
+        QStringLiteral("/var/lib/AccountsService/users/setup")));
 }
 
 QTEST_MAIN(HelperTest)

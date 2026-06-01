@@ -2,13 +2,35 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../animations"
 
 WizardFrame {
-    eyebrow: qsTr("Vaihe 1 / 4")
+    eyebrow: qsTr("Henkilötiedot")
     title: qsTr("Kuka käyttää tätä tietokonetta?")
     subtitle: qsTr("Nimi näkyy kirjautumisruudussa ja käyttäjäasetuksissa.")
-    illustration: "../assets/welcome.svg"
+    illustrationComponent: Component { NameAnimation {} }
     step: 0
+
+    property bool syncingUsername: false
+
+    StackView.onStatusChanged: {
+        if (StackView.status === StackView.Activating) {
+            filterHint.opacity = 0
+            hintTimer.stop()
+        }
+    }
+
+    // Syncs controller-driven username changes back to the field (auto-derive from display name)
+    Connections {
+        target: oemSetup
+        function onUsernameChanged() {
+            if (!syncingUsername && usernameCard.text !== oemSetup.username) {
+                syncingUsername = true
+                usernameCard.text = oemSetup.username
+                syncingUsername = false
+            }
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -24,29 +46,94 @@ WizardFrame {
             onAccepted: next()
         }
 
-        Rectangle {
+        ColumnLayout {
             Layout.fillWidth: true
-            implicitHeight: 76
-            radius: 8
-            color: "#eef3f1"
-            border.color: "#d8e1dd"
+            spacing: 6
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 14
-                spacing: 4
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
 
                 Label {
                     text: qsTr("Käyttäjätunnus")
-                    color: "#63706f"
                     font.pixelSize: 13
+                    font.weight: Font.DemiBold
+                    color: "#4a5568"
                 }
 
-                Label {
-                    text: oemSetup.username.length > 0 ? oemSetup.username : qsTr("muodostetaan nimestä")
-                    color: "#263238"
-                    font.pixelSize: 20
-                    font.weight: Font.DemiBold
+                Rectangle {
+                    visible: !oemSetup.usernameManuallyEdited
+                    width: autoBadge.implicitWidth + 12
+                    height: 18
+                    radius: 9
+                    color: "#dff0e8"
+
+                    Label {
+                        id: autoBadge
+                        anchors.centerIn: parent
+                        text: qsTr("auto")
+                        font.pixelSize: 10
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: 0.5
+                        color: "#44896a"
+                    }
+                }
+            }
+
+            TextFieldCard {
+                id: usernameCard
+                Layout.fillWidth: true
+                placeholderText: qsTr("muodostetaan nimestä")
+                text: oemSetup.username
+                onTextChanged: {
+                    if (syncingUsername) return
+                    // Filter here before telling the controller — this lets us detect
+                    // filtering synchronously and give immediate feedback
+                    const raw = text
+                    const filtered = raw.toLowerCase().replace(/[^a-z0-9_-]/g, "").substring(0, 32)
+                    if (filtered !== raw) {
+                        syncingUsername = true
+                        usernameCard.text = filtered  // reentrant onTextChanged is blocked by guard
+                        syncingUsername = false
+                        usernameCard.flash()
+                        filterHint.show()
+                    }
+                    oemSetup.username = filtered
+                }
+                onAccepted: next()
+            }
+
+            // Brief hint — fades in when filtering fires, auto-hides after ~2.4 s
+            Label {
+                id: filterHint
+                Layout.fillWidth: true
+                text: qsTr("Vain merkit a–z, 0–9, _ ja – sallittu")
+                font.pixelSize: 12
+                color: "#b45309"
+                opacity: 0
+                wrapMode: Text.WordWrap
+
+                Behavior on opacity { NumberAnimation { duration: 180 } }
+
+                function show() { opacity = 1; hintTimer.restart() }
+
+                Timer {
+                    id: hintTimer
+                    interval: 2400
+                    onTriggered: filterHint.opacity = 0
+                }
+            }
+
+            Text {
+                visible: oemSetup.usernameManuallyEdited
+                text: "↺ " + qsTr("Palauta automaattinen")
+                font.pixelSize: 12
+                color: "#44896a"
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: oemSetup.resetUsernameToAutomatic()
                 }
             }
         }

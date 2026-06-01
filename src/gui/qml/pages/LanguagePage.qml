@@ -2,12 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
+import "../animations"
 
 WizardFrame {
-    eyebrow: qsTr("Vaihe 2 / 4")
+    eyebrow: qsTr("Kieliasetukset")
     title: qsTr("Valitse kieli")
     subtitle: qsTr("Kieli asetetaan järjestelmän oletukseksi.")
-    illustration: "../assets/welcome.svg"
+    illustrationComponent: Component { LanguageAnimation {} }
     step: 1
 
     ListModel {

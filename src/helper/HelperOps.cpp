@@ -89,7 +89,7 @@ bool removeAutologin(const SystemOps& ops)
         QStringLiteral("autologin-user="),
         QStringLiteral("autologin-user-timeout="),
     });
-    ops.removeFile(QStringLiteral("/etc/lightdm/lightdm.conf.d/50-oem-autologin.conf"));
+    ok &= ops.removeFile(QStringLiteral("/etc/lightdm/lightdm.conf.d/50-oem-autologin.conf"));
 
     for (const QString& path : {
             QStringLiteral("/etc/gdm3/custom.conf"),
@@ -100,7 +100,7 @@ bool removeAutologin(const SystemOps& ops)
         });
     }
 
-    ops.removeFile(QStringLiteral("/etc/sddm.conf.d/oem-autologin.conf"));
+    ok &= ops.removeFile(QStringLiteral("/etc/sddm.conf.d/oem-autologin.conf"));
 
     return ok;
 }
@@ -118,9 +118,6 @@ int validateRequest(const QJsonObject& request)
 
     const auto usernameResult = validateUsername(username);
     if (!usernameResult.ok) return fail(usernameResult.message);
-
-    if (deriveUsername(displayName) != username)
-        return fail(QStringLiteral("Käyttäjätunnus ei vastaa annettua nimeä."));
 
     const auto localeResult = validateLocale(locale);
     if (!localeResult.ok) return fail(localeResult.message);
@@ -187,7 +184,7 @@ int doApply(const QJsonObject& request, const SystemOps& ops)
     const QString locale      = request.value(QStringLiteral("locale")).toString();
     const QString password    = request.value(QStringLiteral("password")).toString();
 
-    if (password.isEmpty() || password.contains(u'\n'))
+    if (password.isEmpty() || password.contains(u'\n') || password.contains(u'\r'))
         return fail(QStringLiteral("Salasana puuttuu tai sisältää virheellisiä merkkejä."));
 
     // id returns 0 if the user exists
@@ -249,6 +246,7 @@ int doCleanup(const QString& setupUser, const SystemOps& ops)
     ops.removeFile(QStringLiteral("/etc/sudoers.d/oem-setup"));
     ops.removeFile(QStringLiteral("/etc/oem-setup/oem-setup.conf"));
     ops.removeFile(QStringLiteral("/etc/polkit-1/actions/fi.local.oem-setup.policy"));
+    ops.removeFile(QStringLiteral("/var/lib/AccountsService/users/") + setupUser);
 
     // Phase 4: Disable and remove the cleanup service itself
     ops.run(QStringLiteral("systemctl"), {QStringLiteral("disable"), QStringLiteral("oem-cleanup.service")});

@@ -11,11 +11,15 @@ ApplicationWindow {
     minimumHeight: 540
     visible: true
     title: qsTr("OEM Setup")
+    flags: Qt.FramelessWindowHint
+    color: "transparent"
 
-    background: Rectangle {
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#eeeae4" }
-            GradientStop { position: 1.0; color: "#e0e7eb" }
+    // Drag anywhere on non-interactive area to move the frameless window
+    Item {
+        anchors.fill: parent
+        z: -1
+        DragHandler {
+            onActiveChanged: if (active) window.startSystemMove()
         }
     }
 
@@ -24,7 +28,7 @@ ApplicationWindow {
         function onApplySucceeded() {
             stack.replace(null, doneComp)
         }
-        function onApplyFailed() {
+        function onApplyRuntimeFailed() {
             stack.pop()
             stack.push(errorComp)
         }
@@ -38,56 +42,59 @@ ApplicationWindow {
         pushEnter: Transition {
             ParallelAnimation {
                 NumberAnimation {
-                    property: "x"
-                    from: stack.width * 0.07; to: 0
-                    duration: 260; easing.type: Easing.OutCubic
+                    property: "scale"
+                    from: 0.95; to: 1.0
+                    duration: 400; easing.type: Easing.OutQuart
                 }
                 NumberAnimation {
                     property: "opacity"
                     from: 0; to: 1
-                    duration: 220; easing.type: Easing.OutCubic
+                    duration: 340; easing.type: Easing.OutCubic
                 }
             }
         }
         pushExit: Transition {
             ParallelAnimation {
                 NumberAnimation {
-                    property: "x"
-                    from: 0; to: -stack.width * 0.07
-                    duration: 260; easing.type: Easing.OutCubic
+                    property: "scale"
+                    from: 1.0; to: 1.04
+                    duration: 300; easing.type: Easing.OutCubic
                 }
-                NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 180 }
+                NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 240 }
             }
         }
         popEnter: Transition {
             ParallelAnimation {
                 NumberAnimation {
-                    property: "x"
-                    from: -stack.width * 0.07; to: 0
-                    duration: 260; easing.type: Easing.OutCubic
+                    property: "scale"
+                    from: 1.04; to: 1.0
+                    duration: 400; easing.type: Easing.OutQuart
                 }
                 NumberAnimation {
                     property: "opacity"
                     from: 0; to: 1
-                    duration: 220; easing.type: Easing.OutCubic
+                    duration: 340; easing.type: Easing.OutCubic
                 }
             }
         }
         popExit: Transition {
             ParallelAnimation {
                 NumberAnimation {
-                    property: "x"
-                    from: 0; to: stack.width * 0.07
-                    duration: 260; easing.type: Easing.OutCubic
+                    property: "scale"
+                    from: 1.0; to: 0.95
+                    duration: 300; easing.type: Easing.OutCubic
                 }
-                NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 180 }
+                NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 240 }
             }
         }
         replaceEnter: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 300; easing.type: Easing.OutCubic }
+            ParallelAnimation {
+                NumberAnimation { property: "scale"; from: 0.95; to: 1.0; duration: 420; easing.type: Easing.OutQuart }
+                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 380; easing.type: Easing.OutCubic }
+            }
         }
         replaceExit: Transition {
-            NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 200 }
+            NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 280 }
         }
 
         initialItem: welcomeComp
@@ -132,8 +139,9 @@ ApplicationWindow {
                 stack.pop()
             }
             onApply: {
-                stack.push(progressComp)
-                oemSetup.apply()
+                if (oemSetup.apply()) {
+                    stack.push(progressComp)
+                }
             }
         }
     }

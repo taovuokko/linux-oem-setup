@@ -8,12 +8,13 @@ Item {
     property string title: ""
     property string subtitle: ""
     property url illustration
-    property int step: -1          // -1 = no indicator, 0-3 = active step
+    property Component illustrationComponent: null
+    property int step: -1
     default property alias content: body.data
     signal back()
     signal next()
 
-    // Card shadow
+    // Card shadow — outer
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -24,14 +25,15 @@ Item {
         color: "#18000000"
         z: card.z - 1
     }
+    // Card shadow — diffuse
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: 12
-        width: card.width - 16
+        anchors.verticalCenterOffset: 14
+        width: card.width - 20
         height: card.height
         radius: card.radius
-        color: "#0e000000"
+        color: "#0c000000"
         z: card.z - 2
     }
 
@@ -49,14 +51,16 @@ Item {
             anchors.fill: parent
             spacing: 0
 
-            // Left panel — dark sidebar
+            // ── Left panel — dark sidebar ──────────────────────────────
             Rectangle {
+                id: sidebar
                 Layout.fillHeight: true
-                Layout.preferredWidth: Math.max(240, card.width * 0.34)
+                Layout.preferredWidth: Math.max(252, card.width * 0.36)
                 radius: 12
                 color: "#1e2c32"
+                clip: true
 
-                // Mask right-side corners so only left side is rounded
+                // Mask right-side corners → only left corners are rounded
                 Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -65,16 +69,45 @@ Item {
                     color: parent.color
                 }
 
-                // Subtle top gradient highlight
+                // Top gradient highlight
                 Rectangle {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    height: parent.height * 0.45
-                    radius: parent.radius
+                    height: parent.height * 0.5
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#263840" }
+                        GradientStop { position: 0.0; color: "#22384060" }
                         GradientStop { position: 1.0; color: "transparent" }
+                    }
+                }
+
+                // Bottom glow blob — large circle half-visible at bottom
+                Rectangle {
+                    id: glowBlob
+                    width: 220; height: 220; radius: 110
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: -70
+                    color: "#44896a"
+                    opacity: 0.11
+                }
+
+                // Accent dot — upper-right, pulses slowly
+                Rectangle {
+                    id: accentDot
+                    width: 88; height: 88; radius: 44
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.topMargin: 30
+                    anchors.rightMargin: 8
+                    color: "#7ecba0"
+                    opacity: 0.07
+
+                    SequentialAnimation on opacity {
+                        running: true
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.14; duration: 3400; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 0.05; duration: 3400; easing.type: Easing.InOutSine }
                     }
                 }
 
@@ -84,48 +117,76 @@ Item {
                     spacing: 0
 
                     Label {
+                        id: eyebrowLabel
+                        Layout.fillWidth: true
+                        Layout.bottomMargin: 14
                         text: root.eyebrow
                         color: "#7ecba0"
                         font.pixelSize: 12
                         font.weight: Font.DemiBold
                         font.letterSpacing: 0.8
-                        Layout.bottomMargin: 14
+                        opacity: 0
+                        transform: Translate { id: eyebrowT; y: 10 }
                     }
 
                     Label {
+                        id: titleLabel
+                        Layout.fillWidth: true
+                        Layout.bottomMargin: 16
                         text: root.title
                         color: "#f0f4f2"
-                        font.pixelSize: 30
+                        font.pixelSize: 24
                         font.weight: Font.Bold
                         wrapMode: Text.WordWrap
                         lineHeight: 1.15
-                        Layout.fillWidth: true
-                        Layout.bottomMargin: 16
+                        opacity: 0
+                        transform: Translate { id: titleT; y: 12 }
                     }
 
                     Label {
+                        id: subtitleLabel
+                        Layout.fillWidth: true
                         text: root.subtitle
                         color: "#9ab8b0"
                         font.pixelSize: 14
-                        lineHeight: 1.3
+                        lineHeight: 1.35
                         wrapMode: Text.WordWrap
-                        Layout.fillWidth: true
+                        opacity: 0
+                        transform: Translate { id: subtitleT; y: 14 }
                     }
 
                     Item { Layout.fillHeight: true }
 
-                    Image {
-                        source: root.illustration
-                        Layout.preferredWidth: 160
-                        Layout.preferredHeight: 130
-                        Layout.alignment: Qt.AlignHCenter
-                        fillMode: Image.PreserveAspectFit
-                        opacity: 0.85
+                    // Illustration wrapper — keeps layout height stable while image floats.
+                    // Set illustrationComponent for an animated QML component, or
+                    // illustration (url) for a static SVG fallback.
+                    Item {
+                        Layout.preferredHeight: 148
+                        Layout.fillWidth: true
+
+                        Item {
+                            anchors.centerIn: parent
+                            width: 142; height: 142
+                            opacity: 0.88
+                            transform: Translate { id: floatT }
+
+                            Image {
+                                anchors.fill: parent
+                                source: root.illustration
+                                fillMode: Image.PreserveAspectFit
+                                visible: root.illustrationComponent === null
+                            }
+
+                            Loader {
+                                anchors.fill: parent
+                                sourceComponent: root.illustrationComponent
+                            }
+                        }
                     }
                 }
             }
 
-            // Right panel — content
+            // ── Right panel — content ──────────────────────────────────
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -135,7 +196,6 @@ Item {
                 Layout.bottomMargin: 36
                 spacing: 0
 
-                // Step indicator — only shown on wizard pages
                 StepIndicator {
                     visible: root.step >= 0
                     currentStep: root.step
@@ -143,7 +203,6 @@ Item {
                     Layout.bottomMargin: 28
                 }
 
-                // Page content
                 Item {
                     id: body
                     Layout.fillWidth: true
@@ -151,5 +210,58 @@ Item {
                 }
             }
         }
+    }
+
+    // ── Retranslate: re-run stagger animation with new text ────────────
+    Connections {
+        target: oemSetup
+        function onUiLanguageChanged() {
+            if (eyebrowLabel.opacity < 0.5) return  // still mid-initial-animation
+            eyebrowLabel.opacity  = 0; eyebrowT.y  = 10
+            titleLabel.opacity    = 0; titleT.y    = 12
+            subtitleLabel.opacity = 0; subtitleT.y = 14
+            eyebrowAppear.restart()
+            titleAppear.restart()
+            subtitleAppear.restart()
+        }
+    }
+
+    // ── Staggered sidebar text fade-in on page appear ──────────────────
+    Component.onCompleted: {
+        eyebrowAppear.start()
+        titleAppear.start()
+        subtitleAppear.start()
+    }
+
+    SequentialAnimation {
+        id: eyebrowAppear
+        ParallelAnimation {
+            NumberAnimation { target: eyebrowLabel; property: "opacity"; to: 1; duration: 300; easing.type: Easing.OutCubic }
+            NumberAnimation { target: eyebrowT;     property: "y";       to: 0; duration: 280; easing.type: Easing.OutCubic }
+        }
+    }
+    SequentialAnimation {
+        id: titleAppear
+        PauseAnimation { duration: 65 }
+        ParallelAnimation {
+            NumberAnimation { target: titleLabel; property: "opacity"; to: 1; duration: 340; easing.type: Easing.OutCubic }
+            NumberAnimation { target: titleT;     property: "y";       to: 0; duration: 300; easing.type: Easing.OutCubic }
+        }
+    }
+    SequentialAnimation {
+        id: subtitleAppear
+        PauseAnimation { duration: 135 }
+        ParallelAnimation {
+            NumberAnimation { target: subtitleLabel; property: "opacity"; to: 1; duration: 380; easing.type: Easing.OutCubic }
+            NumberAnimation { target: subtitleT;     property: "y";       to: 0; duration: 340; easing.type: Easing.OutCubic }
+        }
+    }
+
+    // ── Floating illustration — gentle vertical bob ────────────────────
+    SequentialAnimation {
+        running: true
+        loops: Animation.Infinite
+        NumberAnimation { target: floatT; property: "y"; to: -10; duration: 2700; easing.type: Easing.InOutSine }
+        NumberAnimation { target: floatT; property: "y"; to: 0;   duration: 2700; easing.type: Easing.InOutSine }
     }
 }

@@ -15,17 +15,64 @@ WizardFrame {
 
         Item { Layout.fillHeight: true }
 
-        BusyIndicator {
-            running: true
-            Layout.alignment: Qt.AlignHCenter
-        }
-
         Label {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: qsTr("Tämä kestää yleensä alle minuutin.")
             color: "#34403f"
             font.pixelSize: 17
+        }
+
+        // ── Progress bar ─────────────────────────────────────────────────
+        Item {
+            id: bar
+            Layout.fillWidth: true
+            Layout.topMargin: 6
+            height: 6
+            property real fillProgress: 0
+
+            // Fake progress: fast start, slows toward ~88 %, waits for real completion
+            SequentialAnimation on fillProgress {
+                running: true
+                NumberAnimation { to: 0.42; duration: 1100; easing.type: Easing.OutCubic }
+                NumberAnimation { to: 0.70; duration: 2600; easing.type: Easing.OutCubic }
+                NumberAnimation { to: 0.88; duration: 4500; easing.type: Easing.OutCubic }
+            }
+
+            // Track
+            Rectangle {
+                anchors.fill: parent
+                radius: 3
+                color: "#dce8e2"
+            }
+
+            // Fill
+            Rectangle {
+                id: fill
+                height: parent.height
+                width: parent.width * bar.fillProgress
+                radius: 3
+                color: "#44896a"
+                clip: true
+
+                // Shimmer sweep
+                Rectangle {
+                    id: shimmer
+                    width: 72; height: parent.height; radius: 3
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: "transparent" }
+                        GradientStop { position: 0.5; color: "#30ffffff" }
+                        GradientStop { position: 1.0; color: "transparent" }
+                    }
+                    SequentialAnimation on x {
+                        loops: Animation.Infinite
+                        running: bar.fillProgress > 0.02
+                        NumberAnimation { from: -72; to: fill.width; duration: 1300; easing.type: Easing.InOutSine }
+                        PauseAnimation  { duration: 500 }
+                    }
+                }
+            }
         }
 
         Item { Layout.fillHeight: true }

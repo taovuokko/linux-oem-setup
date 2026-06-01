@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import "../components"
 
 WizardFrame {
-    eyebrow: qsTr("Vaihe 4 / 4")
+    eyebrow: qsTr("Yhteenveto")
     title: qsTr("Tarkista tiedot")
     subtitle: qsTr("Kun jatkat, käyttäjä luodaan ja väliaikainen setup-tila poistetaan.")
     illustration: "../assets/done.svg"
@@ -38,13 +38,21 @@ WizardFrame {
             }
         }
 
+        Label {
+            Layout.fillWidth: true
+            visible: oemSetup.errorMessage.length > 0
+            text: oemSetup.errorMessage
+            color: "#9b2c2c"
+            wrapMode: Text.WordWrap
+        }
+
         Item { Layout.fillHeight: true }
 
         RowLayout {
             Layout.fillWidth: true
             SecondaryButton { text: qsTr("Takaisin"); onClicked: back() }
             Item { Layout.fillWidth: true }
-            PrimaryButton { text: qsTr("Luo käyttäjä"); onClicked: apply() }
+            PrimaryButton { text: qsTr("Luo käyttäjä"); enabled: !oemSetup.busy; onClicked: apply() }
         }
     }
 }

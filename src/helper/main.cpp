@@ -1,4 +1,5 @@
 #include "HelperOps.h"
+#include "Validation.h"
 
 #include <QCoreApplication>
 #include <QFile>
@@ -30,7 +31,9 @@ QString loadSetupUser()
         if (line.startsWith(u'#') || !line.contains(u'=')) continue;
         const int sep = line.indexOf(u'=');
         if (line.left(sep).trimmed() == QStringLiteral("setup_user")) {
-            setupUser = line.mid(sep + 1).trimmed();
+            const QString candidate = line.mid(sep + 1).trimmed();
+            if (OemSetup::validateUsername(candidate).ok)
+                setupUser = candidate;
             break;
         }
     }
@@ -55,6 +58,8 @@ int main(int argc, char* argv[])
         return fail(QStringLiteral("Stdinin lukeminen epäonnistui."));
     }
     const QByteArray payload = input.readAll();
+    if (payload.size() > 4096)
+        return fail(QStringLiteral("Pyyntö on liian suuri."));
 
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(payload, &parseError);
