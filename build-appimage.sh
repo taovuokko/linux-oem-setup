@@ -24,6 +24,7 @@ sudo apt-get install -y \
   qml6-module-qtquick-layouts \
   qml6-module-qtquick-templates \
   qml6-module-qtquick-window \
+  qml6-module-qtqml-workerscript \
   libfuse2
 
 # ── 2. Build ───────────────────────────────────────────────────────────────────
