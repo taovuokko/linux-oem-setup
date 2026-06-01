@@ -233,10 +233,14 @@ int doCleanup(const QString& setupUser, const SystemOps& ops)
     if (!removeAutologin(ops))
         return fail(QStringLiteral("Autologinin poisto epäonnistui — yritetään uudelleen seuraavalla bootilla."));
 
-    // Phase 2: Remove setup user (only after autologin is confirmed gone)
-    ops.run(QStringLiteral("pkill"), {QStringLiteral("-u"), setupUser});
+    // Phase 2: Remove setup user (only after autologin is confirmed gone).
+    // kill-user + terminate-user flush any lingering systemd user session.
+    // --force on userdel removes the account even if systemd still tracks it.
+    ops.run(QStringLiteral("loginctl"), {QStringLiteral("disable-linger"), setupUser});
+    ops.run(QStringLiteral("loginctl"), {QStringLiteral("kill-user"), setupUser});
     ops.run(QStringLiteral("loginctl"), {QStringLiteral("terminate-user"), setupUser});
-    ops.run(QStringLiteral("userdel"), {QStringLiteral("-r"), setupUser});
+    ops.run(QStringLiteral("pkill"), {QStringLiteral("-9"), QStringLiteral("-u"), setupUser});
+    ops.run(QStringLiteral("userdel"), {QStringLiteral("--force"), QStringLiteral("-r"), setupUser});
     ops.run(QStringLiteral("groupdel"), {setupUser});
 
     if (ops.run(QStringLiteral("id"), {setupUser}))
