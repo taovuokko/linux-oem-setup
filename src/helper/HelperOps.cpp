@@ -248,6 +248,7 @@ int doCleanup(const QString& setupUser, const SystemOps& ops)
     // Phase 3: Remove remaining OEM files
     ops.removeFile(QStringLiteral("/etc/sudoers.d/oem-setup"));
     ops.removeFile(QStringLiteral("/etc/oem-setup/oem-setup.conf"));
+    ops.removeFile(QStringLiteral("/etc/polkit-1/actions/fi.local.oem-setup.policy"));
 
     // Phase 4: Disable and remove the cleanup service itself
     ops.run(QStringLiteral("systemctl"), {QStringLiteral("disable"), QStringLiteral("oem-cleanup.service")});
