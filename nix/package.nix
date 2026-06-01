@@ -36,6 +36,7 @@ stdenv.mkDerivation {
 
   meta = {
     description = "First-boot OEM setup wizard for Linux";
+    mainProgram = "oem-setup-gui";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };
