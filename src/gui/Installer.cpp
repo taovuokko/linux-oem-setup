@@ -61,7 +61,7 @@ namespace Installer {
 
 bool isInstalled()
 {
-    return QFile::exists(QStringLiteral("/usr/libexec/oem-setup/oem-setup-helper"));
+    return QFile::exists(QStringLiteral("/usr/libexec/oem-setup/oem-apply.sh"));
 }
 
 int install(const QString& setupUser)
@@ -89,9 +89,12 @@ int install(const QString& setupUser)
     if (!copyFile(selfPath, "/usr/bin/oem-setup-gui", execPerms))
         return 1;
 
-    // Install helper
-    if (!copyFile(base + "/libexec/oem-setup/oem-setup-helper",
-                  "/usr/libexec/oem-setup/oem-setup-helper", execPerms))
+    // Install scripts
+    if (!copyFile(base + "/libexec/oem-setup/oem-apply.sh",
+                  "/usr/libexec/oem-setup/oem-apply.sh", execPerms))
+        return 1;
+    if (!copyFile(base + "/libexec/oem-setup/oem-cleanup.sh",
+                  "/usr/libexec/oem-setup/oem-cleanup.sh", execPerms))
         return 1;
 
     // Polkit policy

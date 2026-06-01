@@ -3,8 +3,6 @@
 #include "Validation.h"
 
 #include <QCoreApplication>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QMap>
 #include <QProcess>
 
@@ -206,13 +204,6 @@ bool OemSetupController::apply()
         return true;
     }
 
-    QJsonObject payload;
-    payload[QStringLiteral("displayName")] = m_displayName;
-    payload[QStringLiteral("username")]    = m_username;
-    payload[QStringLiteral("locale")]      = m_locale;
-    payload[QStringLiteral("password")]    = m_password;
-    const QByteArray json = QJsonDocument(payload).toJson(QJsonDocument::Compact);
-
     m_helperProcess = new QProcess(this);
 
     connect(m_helperProcess, &QProcess::finished, this,
@@ -236,7 +227,11 @@ bool OemSetupController::apply()
     });
 
     m_helperProcess->start(QStringLiteral("pkexec"), {
-        QStringLiteral("/usr/libexec/oem-setup/oem-setup-helper")});
+        QStringLiteral("/usr/libexec/oem-setup/oem-apply.sh"),
+        QStringLiteral("--username"),     m_username,
+        QStringLiteral("--display-name"), m_displayName,
+        QStringLiteral("--locale"),       m_locale,
+    });
 
     if (!m_helperProcess->waitForStarted(5000)) {
         m_helperProcess->deleteLater();
@@ -248,7 +243,8 @@ bool OemSetupController::apply()
         return true;
     }
 
-    m_helperProcess->write(json);
+    // Password via stdin — never on argv
+    m_helperProcess->write((m_password + u'\n').toUtf8());
     m_helperProcess->closeWriteChannel();
     return true;
 }

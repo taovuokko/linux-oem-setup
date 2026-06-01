@@ -20,7 +20,6 @@ enable_testing()
 
 add_subdirectory(src/common)
 add_subdirectory(src/gui)
-add_subdirectory(src/helper)
 add_subdirectory(tests)
 
 install(FILES data/desktop/oem-setup.desktop
@@ -38,6 +37,12 @@ install(FILES data/polkit/fi.local.oem-setup.policy
 
 install(FILES data/systemd/oem-cleanup.service
     DESTINATION lib/systemd/system
+)
+
+install(PROGRAMS
+    data/scripts/oem-apply.sh
+    data/scripts/oem-cleanup.sh
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/oem-setup
 )
 
 install(FILES data/config/oem-setup.conf
