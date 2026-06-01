@@ -42,6 +42,7 @@ jobs:
       - name: Build AppImage
         env:
           QMAKE: /usr/bin/qmake6
+          QML_SOURCES_PATHS: ${{ github.workspace }}/src/gui/qml
           OUTPUT: oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage
         run: |
           ./linuxdeploy --appimage-extract-and-run \
