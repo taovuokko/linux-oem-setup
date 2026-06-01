@@ -12,9 +12,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(GNUInstallDirs)
 
-find_package(Qt6 6.6 REQUIRED COMPONENTS Core Gui Quick QuickControls2 Svg)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Quick QuickControls2 Svg)
 
-qt_standard_project_setup(REQUIRES 6.6)
+qt_standard_project_setup(REQUIRES 6.4)
 
 enable_testing()
 
