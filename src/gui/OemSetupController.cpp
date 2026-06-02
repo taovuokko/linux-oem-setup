@@ -16,10 +16,8 @@ QString OemSetupController::displayName() const { return m_displayName; }
 void OemSetupController::setDisplayName(const QString& value)
 {
     const QString trimmed = value.trimmed();
-    if (m_displayName == trimmed) {
-        if (value != trimmed) emit displayNameChanged(); // re-normalize QML field
+    if (m_displayName == trimmed)
         return;
-    }
 
     m_displayName = trimmed;
     emit displayNameChanged();

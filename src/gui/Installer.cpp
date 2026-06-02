@@ -37,7 +37,10 @@ static bool copyFile(const QString& src, const QString& dst, QFile::Permissions 
         fail("cannot copy " + src + " -> " + dst);
         return false;
     }
-    QFile::setPermissions(dst, perms);
+    if (!QFile::setPermissions(dst, perms)) {
+        fail("cannot set permissions on " + dst);
+        return false;
+    }
     return true;
 }
 
@@ -51,7 +54,10 @@ static bool writeFile(const QString& dst, const QString& content, QFile::Permiss
     }
     QTextStream(&f) << content;
     f.close();
-    QFile::setPermissions(dst, perms);
+    if (!QFile::setPermissions(dst, perms)) {
+        fail("cannot set permissions on " + dst);
+        return false;
+    }
     return true;
 }
 
@@ -59,10 +65,6 @@ static bool writeFile(const QString& dst, const QString& content, QFile::Permiss
 
 namespace Installer {
 
-bool isInstalled()
-{
-    return QFile::exists(QStringLiteral("/usr/libexec/oem-setup/oem-apply.sh"));
-}
 
 int install(const QString& setupUser)
 {
@@ -134,11 +136,13 @@ int install(const QString& setupUser)
                    QFile::ReadGroup | QFile::ReadOther))
         return 1;
 
-    QProcess::execute("chown", {"-R",
-        setupUser + ":" + setupUser,
-        "/home/" + setupUser + "/.config"});
+    if (QProcess::execute(QStringLiteral("chown"), {QStringLiteral("-R"),
+            setupUser + u':' + setupUser,
+            "/home/" + setupUser + "/.config"}) != 0)
+        return fail("chown epäonnistui autostart-hakemistolle");
 
-    QProcess::execute("systemctl", {"daemon-reload"});
+    if (QProcess::execute(QStringLiteral("systemctl"), {QStringLiteral("daemon-reload")}) != 0)
+        return fail("systemctl daemon-reload epäonnistui");
 
     QTextStream(stdout)
         << "oem-setup: asennus valmis — käynnistä järjestelmä uudelleen." << Qt::endl;

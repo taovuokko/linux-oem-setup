@@ -1,7 +1,7 @@
 [Unit]
 Description=OEM setup cleanup
 After=local-fs.target
-Before=display-manager.service gdm.service gdm3.service lightdm.service sddm.service
+Before=graphical.target display-manager.service gdm.service gdm3.service lightdm.service sddm.service
 
 [Service]
 Type=oneshot
