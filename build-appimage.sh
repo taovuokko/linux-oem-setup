@@ -18,7 +18,7 @@ sudo apt-get install -y \
   qt6-base-dev qt6-declarative-dev qt6-svg-dev \
   qt6-tools-dev qt6-tools-dev-tools \
   cmake ninja-build pkg-config \
-  libgl1-mesa-dev libglib2.0-dev \
+  libgl1-mesa-dev libopengl0 libglib2.0-dev \
   qml6-module-qtquick \
   qml6-module-qtquick-controls \
   qml6-module-qtquick-layouts \
