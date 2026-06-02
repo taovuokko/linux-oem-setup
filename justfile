@@ -12,6 +12,8 @@ build: configure
     cmake --build {{build_dir}}
 
 run: build
+    mkdir -p {{build_dir}}/src/qml
+    ln -sfn ../gui/OemSetup {{build_dir}}/src/qml/OemSetup
     ./{{build_dir}}/src/gui/oem-setup-gui --mock
 
 test: build
