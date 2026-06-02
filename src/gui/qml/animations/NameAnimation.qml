@@ -1,14 +1,13 @@
 import QtQuick
 
-// User card draws in: card fades, avatar pops (OutBack), two text lines slide right.
-// Tweak lineFullW / lineShortW to adjust placeholder line lengths.
+// Käyttäjäkortti piirtyy sisään. Ei mitään kovin vakavaa.
 Item {
     id: root
 
-    readonly property real lineFullW:  44   // card(112) − leftPad(14) − avatar(32) − gap(10) − rightPad(12)
-    readonly property real lineShortW: 28   // shorter second line
+    readonly property real lineFullW:  44   // sopiva leveys ekalle riville
+    readonly property real lineShortW: 28   // toinen rivi on lyhyempi
 
-    // ── Card ─────────────────────────────────────────────────────────────
+    // Kortti.
     Rectangle {
         id: card
         width: 112; height: 76
@@ -18,7 +17,7 @@ Item {
         border.color: "#44896a"; border.width: 1.5
         opacity: 0
 
-        // Avatar circle
+        // Avatar.
         Rectangle {
             id: avatar
             width: 32; height: 32; radius: 16
@@ -27,14 +26,14 @@ Item {
             color: "#44896a"
             scale: 0
 
-            // Head
+            // Pää.
             Rectangle {
                 width: 14; height: 14; radius: 7
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top; anchors.topMargin: 4
                 color: "#7ecba0"
             }
-            // Shoulders
+            // Hartiat.
             Rectangle {
                 width: 20; height: 8; radius: 4
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -43,7 +42,7 @@ Item {
             }
         }
 
-        // Text placeholder lines
+        // Feikkitekstirivit.
         Column {
             anchors.left: avatar.right; anchors.leftMargin: 10
             anchors.right: parent.right; anchors.rightMargin: 12

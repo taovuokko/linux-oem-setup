@@ -8,10 +8,10 @@ ColumnLayout {
     property alias placeholderText: field.placeholderText
     property string label: ""
     property string supportingText: ""
-    // When true, shows a show/hide eye button (use instead of echoMode: Password)
+    // true näyttää silmäpainikkeen salasanakenttään.
     property bool showToggle: false
     property bool _passwordVisible: false
-    // echoMode used when showToggle is false; ignored when showToggle is true
+    // Käytössä vain kun showToggle on false.
     property int echoMode: TextInput.Normal
     signal accepted()
 
@@ -25,7 +25,7 @@ ColumnLayout {
         color: "#4a5568"
     }
 
-    // Wrapper so the eye button can be absolutely positioned over the field
+    // Wrapperi, jotta silmäpainike saadaan kentän päälle.
     Item {
         Layout.fillWidth: true
         implicitHeight: field.implicitHeight
@@ -68,7 +68,7 @@ ColumnLayout {
             }
         }
 
-        // Eye toggle button
+        // Salasanan näyttö/piilotus.
         Item {
             visible: root.showToggle
             width: 40; height: parent.height
@@ -93,7 +93,7 @@ ColumnLayout {
                     ctx.lineWidth = 1.5
                     ctx.lineCap = "round"
 
-                    // Lens / eye outline
+                    // Silmän ääriviiva.
                     ctx.beginPath()
                     ctx.moveTo(0, h / 2)
                     ctx.quadraticCurveTo(w / 2, 0, w, h / 2)
@@ -101,12 +101,12 @@ ColumnLayout {
                     ctx.stroke()
 
                     if (open) {
-                        // Pupil — password is visible
+                        // Pupilli näkyvälle salasanalle.
                         ctx.beginPath()
                         ctx.arc(w / 2, h / 2, h / 4, 0, Math.PI * 2)
                         ctx.fill()
                     } else {
-                        // Slash — password is hidden
+                        // Viiva piilotetulle salasanalle.
                         ctx.beginPath()
                         ctx.moveTo(w * 0.15, h * 0.9)
                         ctx.lineTo(w * 0.85, h * 0.1)

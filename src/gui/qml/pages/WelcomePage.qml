@@ -14,7 +14,7 @@ WizardFrame {
         anchors.fill: parent
         spacing: 22
 
-        // Language toggle — top-right corner
+        // Kielivalinta yläkulmassa.
         RowLayout {
             Layout.fillWidth: true
 
@@ -34,7 +34,7 @@ WizardFrame {
                         required property int index
 
                         width: 38; height: 26
-                        // Pill shape: left side rounded for FI, right side rounded for EN
+                        // Kaksiosainen pilleri, reunat pyöreiksi käsin.
                         radius: 6
                         Rectangle {
                             visible: index === 0

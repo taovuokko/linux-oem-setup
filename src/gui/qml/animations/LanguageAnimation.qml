@@ -1,11 +1,10 @@
 import QtQuick
 
-// Two speech bubbles slide in from opposite sides with a short stagger.
-// Bubble 1: dark teal, upper-left. Bubble 2: green, lower-right.
+// Puhekuplat liukuvat sisään pienellä viiveellä.
 Item {
     id: root
 
-    // ── Bubble 1 — upper left ─────────────────────────────────────────────
+    // Ylempi kupla.
     Rectangle {
         id: bubble1
         width: 90; height: 46; radius: 14
@@ -24,7 +23,7 @@ Item {
         }
     }
 
-    // ── Bubble 2 — lower right ───────────────────────────────────────────
+    // Alempi kupla.
     Rectangle {
         id: bubble2
         width: 80; height: 40; radius: 12

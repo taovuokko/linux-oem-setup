@@ -70,8 +70,8 @@
         <translation>derived from name</translation>
     </message>
     <message>
-        <source>Vain merkit a–z, 0–9, _ ja – sallittu</source>
-        <translation>Only characters a–z, 0–9, _ and – are allowed</translation>
+        <source>Vain merkit a-z, 0-9, _ ja - sallittu</source>
+        <translation>Only characters a-z, 0-9, _ and - are allowed</translation>
     </message>
     <message>
         <source>Palauta automaattinen</source>

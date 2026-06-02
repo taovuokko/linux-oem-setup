@@ -19,16 +19,15 @@ static int fail(const QString& msg)
 
 static QString appBaseDir()
 {
-    // nix-appimage stores files at Nix store paths, not under $APPDIR/usr/.
-    // applicationDirPath() resolves to PREFIX/bin/ in both a CMake install
-    // tree and inside a nix-appimage (extracted or FUSE-mounted).
+    // nix-appimage pitää tiedostot Nix store -poluissa, ei $APPDIR/usr:n alla.
+    // applicationDirPath()/.. osuu silti samaan prefiksiin myös CMake-installissa.
     return QCoreApplication::applicationDirPath() + "/..";
 }
 
 static bool copyFile(const QString& src, const QString& dst, QFile::Permissions perms)
 {
     if (!QFile::exists(src))
-        return fail("source not found: " + src) == 0; // returns false
+        return fail("source not found: " + src) == 0; // palauttaa false
 
     QDir().mkpath(QFileInfo(dst).absolutePath());
     QFile::remove(dst);
@@ -61,7 +60,7 @@ static bool writeFile(const QString& dst, const QString& content, QFile::Permiss
     return true;
 }
 
-} // namespace
+}
 
 namespace Installer {
 
@@ -79,7 +78,7 @@ int install(const QString& setupUser)
 
     const QString base = appBaseDir();
 
-    // Install GUI binary (self) to /usr/bin/
+    // GUI-binääri, eli tämä sama ohjelma.
     const QString appImagePath = QString::fromLocal8Bit(qgetenv("APPIMAGE"));
     const QString selfPath = appImagePath.isEmpty()
         ? QCoreApplication::applicationFilePath()
@@ -91,7 +90,7 @@ int install(const QString& setupUser)
     if (!copyFile(selfPath, "/usr/bin/oem-setup-gui", execPerms))
         return 1;
 
-    // Install scripts
+    // Skriptit.
     if (!copyFile(base + "/libexec/oem-setup/oem-apply.sh",
                   "/usr/libexec/oem-setup/oem-apply.sh", execPerms))
         return 1;
@@ -99,7 +98,7 @@ int install(const QString& setupUser)
                   "/usr/libexec/oem-setup/oem-cleanup.sh", execPerms))
         return 1;
 
-    // Polkit policy
+    // Polkit-policy.
     constexpr auto dataPerms =
         QFile::ReadOwner | QFile::WriteOwner |
         QFile::ReadGroup | QFile::ReadOther;
@@ -107,20 +106,20 @@ int install(const QString& setupUser)
                   "/etc/polkit-1/actions/fi.local.oem-setup.policy", dataPerms))
         return 1;
 
-    // Systemd cleanup service
+    // Cleanup-palvelu.
     if (!copyFile(base + "/lib/systemd/system/oem-cleanup.service",
                   "/usr/lib/systemd/system/oem-cleanup.service", dataPerms))
         return 1;
 
-    // Config
+    // Ajonaikainen konffi.
     if (!writeFile("/etc/oem-setup/oem-setup.conf",
                    "setup_user=" + setupUser + "\n"
                    "allowed_locales=fi_FI.UTF-8;sv_SE.UTF-8;en_GB.UTF-8;en_US.UTF-8\n",
                    dataPerms))
         return 1;
 
-    // Autostart for setup user
-    // AppImages need --appimage-extract-and-run on systems without FUSE.
+    // Autostart setup-käyttäjälle.
+    // AppImage tarvitsee tämän jos FUSE puuttuu.
     const QString execLine = appImagePath.isEmpty()
         ? QStringLiteral("Exec=/usr/bin/oem-setup-gui")
         : QStringLiteral("Exec=/usr/bin/oem-setup-gui --appimage-extract-and-run");
@@ -145,8 +144,8 @@ int install(const QString& setupUser)
         return fail("systemctl daemon-reload epäonnistui");
 
     QTextStream(stdout)
-        << "oem-setup: asennus valmis — käynnistä järjestelmä uudelleen." << Qt::endl;
+        << "oem-setup: asennus valmis, käynnistä järjestelmä uudelleen." << Qt::endl;
     return 0;
 }
 
-} // namespace Installer
+}

@@ -1,11 +1,10 @@
 import QtQuick
 
-// Laptop lid opens upward, checkmark fades in on screen.
-// Colours: teal palette (#44896a / #7ecba0) on dark bg (#1a2e2e).
+// Pieni läppärianimaatio tervetulosivulle.
 Item {
     id: root
 
-    // ── Keyboard base ────────────────────────────────────────────────────
+    // Näppäimistön pohja.
     Rectangle {
         id: base
         width: 96; height: 12; radius: 4
@@ -13,7 +12,7 @@ Item {
         anchors.bottom: parent.bottom; anchors.bottomMargin: 20
         color: "#2c4040"
 
-        // Trackpad hint
+        // Trackpadin vihje.
         Rectangle {
             width: 28; height: 5; radius: 2.5
             anchors.centerIn: parent
@@ -21,7 +20,7 @@ Item {
         }
     }
 
-    // ── Screen — clip container whose height grows from 0 ────────────────
+    // Näyttö kasvaa saranoista ylöspäin.
     Item {
         id: screenClip
         width: 84; height: 0
@@ -31,7 +30,7 @@ Item {
 
         Rectangle {
             width: parent.width; height: 58
-            anchors.bottom: parent.bottom   // grows from hinge upward
+            anchors.bottom: parent.bottom   // kasvaa saranasta ylöspäin
             radius: 5
             color: "#1a2e2e"
             border.color: "#44896a"; border.width: 1.5

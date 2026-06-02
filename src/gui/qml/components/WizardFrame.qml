@@ -14,7 +14,7 @@ Item {
     signal back()
     signal next()
 
-    // Card shadow — outer
+    // Kortin ulompi varjo.
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -25,7 +25,7 @@ Item {
         color: "#18000000"
         z: card.z - 1
     }
-    // Card shadow — diffuse
+    // Pehmeämpi varjo.
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -51,7 +51,7 @@ Item {
             anchors.fill: parent
             spacing: 0
 
-            // ── Left panel — dark sidebar ──────────────────────────────
+            // Vasen tumma laita.
             Rectangle {
                 id: sidebar
                 Layout.fillHeight: true
@@ -60,7 +60,7 @@ Item {
                 color: "#1e2c32"
                 clip: true
 
-                // Mask right-side corners → only left corners are rounded
+                // Maskataan oikea reuna, pyöristys jää vain vasemmalle.
                 Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -69,7 +69,7 @@ Item {
                     color: parent.color
                 }
 
-                // Top gradient highlight
+                // Kevyt ylävalo.
                 Rectangle {
                     anchors.top: parent.top
                     anchors.left: parent.left
@@ -81,7 +81,7 @@ Item {
                     }
                 }
 
-                // Bottom glow blob — large circle half-visible at bottom
+                // Alareunan hehku.
                 Rectangle {
                     id: glowBlob
                     width: 220; height: 220; radius: 110
@@ -92,7 +92,7 @@ Item {
                     opacity: 0.11
                 }
 
-                // Accent dot — upper-right, pulses slowly
+                // Pieni taustapiste.
                 Rectangle {
                     id: accentDot
                     width: 88; height: 88; radius: 44
@@ -157,9 +157,8 @@ Item {
 
                     Item { Layout.fillHeight: true }
 
-                    // Illustration wrapper — keeps layout height stable while image floats.
-                    // Set illustrationComponent for an animated QML component, or
-                    // illustration (url) for a static SVG fallback.
+                    // Kuvan paikka pysyy samana vaikka animaatio vähän kelluu.
+                    // illustrationComponent on animaatiolle, illustration staattiselle SVG:lle.
                     Item {
                         Layout.preferredHeight: 148
                         Layout.fillWidth: true
@@ -186,7 +185,7 @@ Item {
                 }
             }
 
-            // ── Right panel — content ──────────────────────────────────
+            // Oikean puolen sisältö.
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -212,11 +211,11 @@ Item {
         }
     }
 
-    // ── Retranslate: re-run stagger animation with new text ────────────
+    // Kielenvaihdossa ajetaan tekstit sisään uudestaan.
     Connections {
         target: oemSetup
         function onUiLanguageChanged() {
-            if (eyebrowLabel.opacity < 0.5) return  // still mid-initial-animation
+            if (eyebrowLabel.opacity < 0.5) return  // alkuanimaatio vielä kesken
             eyebrowLabel.opacity  = 0; eyebrowT.y  = 10
             titleLabel.opacity    = 0; titleT.y    = 12
             subtitleLabel.opacity = 0; subtitleT.y = 14
@@ -226,7 +225,7 @@ Item {
         }
     }
 
-    // ── Staggered sidebar text fade-in on page appear ──────────────────
+    // Sivupalkin tekstit sisään pienellä porrastuksella.
     Component.onCompleted: {
         eyebrowAppear.start()
         titleAppear.start()
@@ -257,7 +256,7 @@ Item {
         }
     }
 
-    // ── Floating illustration — gentle vertical bob ────────────────────
+    // Kuva kelluu vähän, ettei ruutu tunnu ihan jäykältä.
     SequentialAnimation {
         running: true
         loops: Animation.Infinite

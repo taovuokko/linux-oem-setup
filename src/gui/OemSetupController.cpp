@@ -35,7 +35,7 @@ QString OemSetupController::username() const { return m_username; }
 
 void OemSetupController::setUsername(const QString& raw)
 {
-    // Filter: lowercase, only [a-z0-9_-], max 32 chars
+    // Pidetään tunnus simppelinä: pienet kirjaimet, [a-z0-9_-], max 32 merkkiä.
     QString filtered;
     filtered.reserve(qMin(raw.size(), 32));
     for (const QChar c : raw.toLower()) {
@@ -212,7 +212,7 @@ bool OemSetupController::apply()
         setBusy(false);
 
         if (exitStatus == QProcess::NormalExit && exitCode == 0) {
-            m_password.clear();   // clear only on success — retry needs the value
+            m_password.clear();   // tyhjennetään vasta onnistumisella, retry tarvitsee tämän
             emit passwordChanged();
             clearError();
             emit applySucceeded();
@@ -241,7 +241,7 @@ bool OemSetupController::apply()
         return true;
     }
 
-    // Password via stdin — never on argv
+    // Salasana stdinistä, ei argv:hen.
     m_helperProcess->write((m_password + u'\n').toUtf8());
     m_helperProcess->closeWriteChannel();
     return true;
@@ -259,7 +259,7 @@ void OemSetupController::setUiLanguage(const QString& lang)
     if (lang != QLatin1String("fi")) {
         const QString path = QStringLiteral(":/i18n/oem-setup_") + lang + QStringLiteral(".qm");
         if (!m_translator.load(path)) {
-            return; // translation file missing — keep current language
+            return; // käännöstä ei ole, pidetään nykyinen kieli
         }
         QCoreApplication::installTranslator(&m_translator);
     }

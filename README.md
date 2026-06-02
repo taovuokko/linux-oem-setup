@@ -1,15 +1,15 @@
 # oem-setup-linux
 
-Qt6/QML-pohjainen käyttöönottoavustin Linuxille. Tarkoitettu tilanteisiin joissa laitteeseen pitää tehdä OEM-tyylinen ensikirjautuminen — käyttäjä luo tilinsä, valitsee kielen ja salasanan, kone käynnistyy uudelleen ja setup-tili katoaa.
+Qt6/QML-pohjainen käyttöönottoavustin Linuxille. Tarkoitettu tilanteisiin joissa laitteeseen pitää tehdä OEM-tyylinen ensikirjautuminen: käyttäjä luo tilinsä, valitsee kielen ja salasanan, kone käynnistyy uudelleen ja setup-tili katoaa.
 
 Toimii ainakin Ubuntulla ja Fedoralla. Todennäköisesti muuallakin.
 
 ## Miten tämä toimii
 
-1. OEM-vaiheessa ajetaan `oem-setup-gui --install setup` rootina — se kopioi binäärin, skriptit ja polkit-policyn oikeisiin paikkoihin, ja kirjoittaa autostart-tiedoston setup-käyttäjälle.
-2. Järjestelmä käynnistetään → setup-käyttäjä kirjautuu automaattisesti → wizard aukeaa.
-3. Käyttäjä täyttää nimen, kielen ja salasanan → "Ota käyttöön" → `pkexec oem-apply.sh` luo tilin rootina.
-4. Kone käynnistyy uudelleen → `oem-cleanup.service` poistaa setup-tilin ja kaikki OEM-tiedostot.
+1. OEM-vaiheessa ajetaan `oem-setup-gui --install setup` rootina. Se kopioi binäärin, skriptit ja polkit-policyn oikeisiin paikkoihin, ja kirjoittaa autostart-tiedoston setup-käyttäjälle.
+2. Järjestelmä käynnistetään. Setup-käyttäjä kirjautuu automaattisesti ja wizard aukeaa.
+3. Käyttäjä täyttää nimen, kielen ja salasanan. "Ota käyttöön" ajaa `pkexec oem-apply.sh`:n, joka luo tilin rootina.
+4. Kone käynnistyy uudelleen. `oem-cleanup.service` poistaa setup-tilin ja kaikki OEM-tiedostot.
 
 ## Rakenne
 
@@ -50,4 +50,4 @@ Sen jälkeen ota image ja levitä. Tai käynnistä suoraan uudelleen.
 
 ## Tuetut distrot
 
-Ubuntu, Fedora, Arch-pohjaiset. Kielipaketti kannattaa asentaa etukäteen jos haluaa lokalisoidut XDG-kansiot (Lataukset jne.) — wizard asettaa localen mutta ei asenna kielipaketteja.
+Ubuntu, Fedora, Arch-pohjaiset. Kielipaketti kannattaa asentaa etukäteen jos haluaa lokalisoidut XDG-kansiot (Lataukset jne.). Wizard asettaa localen mutta ei asenna kielipaketteja.

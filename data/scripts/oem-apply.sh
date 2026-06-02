@@ -1,8 +1,7 @@
 #!/bin/bash
-# Runs as root via pkexec. Creates the real user account, sets locale,
-# enables the cleanup service, and removes autologin config.
-# Usage: pkexec oem-apply.sh --username X --display-name Y --locale Z
-# Password is read from stdin (never on argv).
+# Ajetaan rootina pkexecillä. Tekee oikean käyttäjän ja vähän siivoaa perään.
+# Käyttö: pkexec oem-apply.sh --username X --display-name Y --locale Z
+# Salasana luetaan stdinistä, ei argv:stä.
 set -euo pipefail
 
 die() { echo "oem-apply: $*" >&2; exit 1; }
@@ -38,7 +37,7 @@ case "$LOCALE" in
     *) die "tuntematon locale: '$LOCALE'" ;;
 esac
 
-# Validate display name: GECOS field forbids colon (passwd separator) and newlines
+# GECOS-kenttä ei tykkää näistä, ja passwd käyttää kaksoispistettä erotinmerkkinä.
 [[ ${#DISPLAY_NAME} -le 128 ]] || die "nimi on liian pitkä"
 case "$DISPLAY_NAME" in
     *:*|*$'\n'*|*$'\r'*) die "nimi sisältää kielletyn merkin" ;;
@@ -47,8 +46,8 @@ esac
 IFS= read -r PASSWORD || true
 [[ -n "$PASSWORD" ]] || die "salasana puuttuu"
 
-# Remove INI keys from a config file (in-place). Tolerates spaces around '='.
-# Returns 0 if file doesn't exist. Preserves SELinux context via cat-redirect.
+# Poistaa INI-avaimia paikallaan. Välilyönnit =-merkin ympärillä sallitaan.
+# Jos tiedostoa ei ole, kaikki hyvin. cat säilyttää SELinux-kontekstin.
 filter_keys() {
     local file="$1"; shift
     [[ -f "$file" ]] || return 0
@@ -65,15 +64,15 @@ filter_keys() {
     return $rc
 }
 
-# Returns 0 if no autologin settings remain in any display-manager config.
-# Pattern is anchored (^) so commented-out example lines are not matched.
+# Palauttaa 0 kun autologin-rivejä ei enää näy DM-konffeissa.
+# Ankkuroitu alkuun, ettei kommentoidut esimerkit osu.
 autologin_gone() {
     local pattern='^[[:blank:]]*(autologin-user|autologin-guest|AutomaticLogin(Enable)?)[[:blank:]]*='
     for f in /etc/lightdm/lightdm.conf /etc/gdm3/custom.conf /etc/gdm/custom.conf; do
         [[ -f "$f" ]] || continue
         grep -qE "$pattern" "$f" && return 1
     done
-    # Drop-in files enable autologin by their mere presence
+    # Drop-in-tiedosto riittää jo itsessään autologiniin.
     for f in \
             /etc/lightdm/lightdm.conf.d/50-oem-autologin.conf \
             /etc/sddm.conf.d/oem-autologin.conf \
@@ -101,24 +100,24 @@ rollback() {
     groupdel "$USERNAME" 2>/dev/null || true
 }
 
-# Reject already-existing user
+# Ei yliajeta olemassa olevaa käyttäjää.
 if id "$USERNAME" &>/dev/null; then
     die "käyttäjä on jo olemassa: $USERNAME"
 fi
 
-# Create user — useradd is portable across all distros.
-# (Debian's adduser is not used: on Fedora/Arch it is a useradd symlink that
-# rejects --gecos and --disabled-password.)
+# useradd on tylsä mutta kulkee distrosta toiseen.
+# Debianin adduser ei käy, Fedorassa/Archissa se voi olla useradd-symlinkki
+# eikä tue samoja optioita.
 useradd -m -c "$DISPLAY_NAME" -s /bin/bash "$USERNAME" \
     || die "käyttäjän luominen epäonnistui"
 
-# Set password via chpasswd stdin (password never on argv)
+# Salasana chpasswdille stdinistä, ettei se näy prosessilistassa.
 if ! printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd; then
     rollback
     die "salasanan asettaminen epäonnistui"
 fi
 
-# Add to sudo/wheel group
+# Lisätään admin-ryhmään jos sellainen löytyy.
 GROUP=""
 if getent group sudo &>/dev/null; then
     GROUP=sudo
@@ -135,7 +134,7 @@ if [[ -n "$GROUP" ]]; then
     fi
 fi
 
-# Set locale
+# Locale paikalleen.
 set_locale() {
     local locale="$1"
     command -v locale-gen &>/dev/null && locale-gen "$locale" || true
@@ -154,13 +153,13 @@ if ! set_locale "$LOCALE"; then
     die "kielen asettaminen epäonnistui"
 fi
 
-# Enable cleanup service before removing autologin so it can retry on next boot
+# Cleanup päälle ennen autologinin poistoa, niin seuraava boot voi yrittää uusiksi.
 if ! systemctl enable oem-cleanup.service; then
     rollback
     die "cleanup-palvelun aktivointi epäonnistui"
 fi
 
-# Remove autologin and verify it's gone — non-fatal, cleanup retries on next boot
+# Yritetään autologin pois heti. Ei kaadeta tähän, cleanup yrittää vielä bootissa.
 remove_autologin && autologin_gone \
     || echo "oem-apply: varoitus: autologinin poisto epäonnistui osin, cleanup-palvelu yrittää uudelleen" >&2
 

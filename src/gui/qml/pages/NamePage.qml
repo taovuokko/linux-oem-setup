@@ -20,7 +20,7 @@ WizardFrame {
         }
     }
 
-    // Syncs controller-driven username changes back to the field (auto-derive from display name)
+    // Kun controller johtaa tunnuksen nimestä, pidetään kenttä mukana.
     Connections {
         target: oemSetup
         function onUsernameChanged() {
@@ -87,13 +87,12 @@ WizardFrame {
                 text: oemSetup.username
                 onTextChanged: {
                     if (syncingUsername) return
-                    // Filter here before telling the controller — this lets us detect
-                    // filtering synchronously and give immediate feedback
+                    // Suodatetaan tässä, niin käyttäjä näkee heti mitä poistui.
                     const raw = text
                     const filtered = raw.toLowerCase().replace(/[^a-z0-9_-]/g, "").substring(0, 32)
                     if (filtered !== raw) {
                         syncingUsername = true
-                        usernameCard.text = filtered  // reentrant onTextChanged is blocked by guard
+                        usernameCard.text = filtered  // vahti estää onTextChanged-kierteen
                         syncingUsername = false
                         usernameCard.flash()
                         filterHint.show()
@@ -103,11 +102,11 @@ WizardFrame {
                 onAccepted: next()
             }
 
-            // Brief hint — fades in when filtering fires, auto-hides after ~2.4 s
+            // Pikku huomautus jos merkkejä suodatettiin pois.
             Label {
                 id: filterHint
                 Layout.fillWidth: true
-                text: qsTr("Vain merkit a–z, 0–9, _ ja – sallittu")
+                text: qsTr("Vain merkit a-z, 0-9, _ ja - sallittu")
                 font.pixelSize: 12
                 color: "#b45309"
                 opacity: 0

@@ -23,7 +23,7 @@ RowLayout {
                 spacing: 6
                 Layout.alignment: Qt.AlignVCenter
 
-                // Step circle
+                // Vaiheen pallo.
                 Rectangle {
                     id: dot
                     width: 32; height: 32; radius: 16
@@ -40,7 +40,7 @@ RowLayout {
                     Behavior on color        { ColorAnimation { duration: 200 } }
                     Behavior on border.color { ColorAnimation { duration: 200 } }
 
-                    // Spring pop when step becomes active
+                    // Pieni pomppu aktiiviselle vaiheelle.
                     onActiveChanged: {
                         if (active) dotPop.start()
                         else dot.scale = 1.0
@@ -68,7 +68,7 @@ RowLayout {
                     }
                 }
 
-                // Step label
+                // Vaiheen nimi.
                 Text {
                     Layout.alignment: Qt.AlignHCenter
                     text: root.stepLabels[index]
@@ -79,7 +79,7 @@ RowLayout {
                 }
             }
 
-            // Connector line
+            // Väliviiva vaiheiden väliin.
             Rectangle {
                 visible: index < root.stepLabels.length - 1
                 Layout.preferredWidth: 44

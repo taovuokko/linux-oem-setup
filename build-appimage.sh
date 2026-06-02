@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Build and optionally test the AppImage locally — mirrors the GitHub Actions pipeline.
-# Run this on Ubuntu 24.04 (or in an Ubuntu 24.04 container/VM).
+# Rakenna ja halutessa testaa AppImage paikallisesti.
+# Tämä on käytännössä sama kuin GitHub Actionsissa. Ubuntu 24.04 on oletus.
 #
-# Usage:
-#   ./build-appimage.sh          # build only
-#   ./build-appimage.sh --test   # build + run AppImage with --mock flag
+# Käyttö:
+#   ./build-appimage.sh          # pelkkä koonti
+#   ./build-appimage.sh --test   # build ja --mock-ajo
 
 set -euo pipefail
 
 SCRIPTDIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPTDIR"
 
-# ── 1. Dependencies ────────────────────────────────────────────────────────────
+# 1. Riippuvuudet
 echo "==> Checking / installing build dependencies..."
 sudo apt-get update -qq
 sudo apt-get install -y \
@@ -27,25 +27,25 @@ sudo apt-get install -y \
   qml6-module-qtqml-workerscript \
   libfuse2
 
-# ── 2. Build ───────────────────────────────────────────────────────────────────
+# 2. Koonti
 echo "==> Building..."
 cmake -B build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX=/usr
 cmake --build build --parallel
 
-# ── 3. Quick sanity check with native binary ───────────────────────────────────
+# 3. Nopea savutesti natiivibinäärillä
 echo "==> Smoke-testing native binary (closes after 3 s)..."
 timeout 3 env LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=offscreen \
   ./build/src/gui/oem-setup-gui --mock || true
 
-# ── 4. Install to AppDir ───────────────────────────────────────────────────────
+# 4. Asennus AppDiriin
 echo "==> Installing to AppDir..."
 rm -rf AppDir
 DESTDIR=AppDir cmake --install build
 
-# Deploy OemSetup QML module (not handled by cmake install or linuxdeploy).
-# Strip the "prefer :/..." hint so Qt uses the filesystem copy unconditionally.
+# QML-moduuli pitää kopioida itse, cmake/linuxdeploy ei hoida tätä kunnolla.
+# Poistetaan prefer-rivi, niin Qt käyttää tiedostokopiota.
 mkdir -p AppDir/usr/qml/OemSetup
 grep -v '^prefer ' build/src/gui/OemSetup/qmldir \
   > AppDir/usr/qml/OemSetup/qmldir
@@ -53,15 +53,14 @@ cp -r build/src/gui/OemSetup/qml AppDir/usr/qml/OemSetup/
 find build/src/gui -name "liboem-setup-guiplugin.so" \
   -exec cp {} AppDir/usr/qml/OemSetup/ \; 2>/dev/null || true
 
-# Force-bundle libOpenGL.so.0 — linuxdeploy treats it as a system GL
-# library and excludes it, but a minimal Ubuntu install may not have it.
+# Pakotetaan libOpenGL mukaan. linuxdeploy pitää sitä muuten liian system-kamana.
 mkdir -p AppDir/usr/lib
 find /usr/lib -name "libOpenGL.so*" -exec cp -Pv {} AppDir/usr/lib/ \;
 
 echo "==> AppDir/usr/qml/OemSetup/ contents:"
 find AppDir/usr/qml/OemSetup -type f | sort
 
-# ── 5. Download linuxdeploy (once) ────────────────────────────────────────────
+# 5. linuxdeploy, jos sitä ei vielä ole
 if [[ ! -x linuxdeploy ]]; then
   echo "==> Downloading linuxdeploy..."
   curl -fsSLo linuxdeploy \
@@ -71,7 +70,7 @@ if [[ ! -x linuxdeploy ]]; then
   chmod +x linuxdeploy linuxdeploy-plugin-qt
 fi
 
-# ── 6. Build AppImage ──────────────────────────────────────────────────────────
+# 6. AppImage
 echo "==> Building AppImage..."
 OUTPUT=oem-setup-test.AppImage \
 APPIMAGE_EXTRACT_AND_RUN=1 \
@@ -89,13 +88,13 @@ echo "==> Verifying OemSetup module is present in AppImage..."
 PRESENT=$(find squashfs-root/usr/qml/OemSetup -name "qmldir" 2>/dev/null | wc -l)
 rm -rf squashfs-root
 if [[ "$PRESENT" -gt 0 ]]; then
-  echo "    OK — OemSetup/qmldir found in AppImage."
+  echo "    OK: OemSetup/qmldir found in AppImage."
 else
-  echo "    FAIL — OemSetup/qmldir NOT found in AppImage!"
+  echo "    FAIL: OemSetup/qmldir NOT found in AppImage!"
   exit 1
 fi
 
-# ── 7. Optional: test run ─────────────────────────────────────────────────────
+# 7. Testiajo, jos pyydettiin
 if [[ "${1:-}" == "--test" ]]; then
   echo ""
   echo "==> Running AppImage (close the window or Ctrl+C to stop)..."

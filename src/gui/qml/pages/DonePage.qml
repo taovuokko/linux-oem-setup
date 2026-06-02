@@ -42,7 +42,7 @@ WizardFrame {
 
         Item { Layout.fillHeight: true }
 
-        // Countdown ring
+        // Lähtölaskennan rengas.
         ColumnLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: 10
@@ -60,7 +60,7 @@ WizardFrame {
                         ctx.clearRect(0, 0, width, height)
                         var cx = width / 2, cy = height / 2, r = 32
 
-                        // Background ring
+                        // Taustarengas.
                         ctx.strokeStyle = "#dce8e2"
                         ctx.lineWidth = 5
                         ctx.lineCap = "round"
@@ -68,7 +68,7 @@ WizardFrame {
                         ctx.arc(cx, cy, r, 0, Math.PI * 2)
                         ctx.stroke()
 
-                        // Remaining time arc (shrinks as countdown progresses)
+                        // Jäljellä oleva aika.
                         var progress = root.secondsLeft / 15.0
                         ctx.strokeStyle = "#44896a"
                         ctx.lineWidth = 5

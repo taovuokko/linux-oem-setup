@@ -37,10 +37,8 @@ jobs:
           cmake --build build --parallel
           DESTDIR=AppDir cmake --install build
 
-          # Deploy OemSetup QML module to usr/qml/ so the runtime can find it.
-          # cmake installs only the binary; linuxdeploy only copies Qt's own modules.
-          # The "prefer :/qt/qml/OemSetup/" hint is stripped so Qt uses the
-          # filesystem copy directly (works regardless of QRC embedding).
+          # QML-moduuli pitää kopioida itse, muuten ohjelma ei löydä sitä ajossa.
+          # Poistetaan prefer-rivi, niin Qt käyttää tiedostokopiota.
           mkdir -p AppDir/usr/qml/OemSetup
           grep -v '^prefer ' build/src/gui/OemSetup/qmldir \
             > AppDir/usr/qml/OemSetup/qmldir
@@ -48,8 +46,7 @@ jobs:
           find build/src/gui -name "liboem-setup-guiplugin.so" \
             -exec cp {} AppDir/usr/qml/OemSetup/ \; 2>/dev/null || true
 
-          # Force-bundle libOpenGL.so.0 — linuxdeploy treats it as a system GL
-          # library and excludes it, but a minimal Ubuntu install may not have it.
+          # Pakotetaan libOpenGL mukaan. Pieni Ubuntu-asennus ei aina tarjoa sitä.
           mkdir -p AppDir/usr/lib
           find /usr/lib -name "libOpenGL.so*" -exec cp -Pv {} AppDir/usr/lib/ \;
 

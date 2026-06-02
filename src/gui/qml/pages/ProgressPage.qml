@@ -23,7 +23,7 @@ WizardFrame {
             font.pixelSize: 17
         }
 
-        // ── Progress bar ─────────────────────────────────────────────────
+        // Progressipalkki.
         Item {
             id: bar
             Layout.fillWidth: true
@@ -31,7 +31,7 @@ WizardFrame {
             height: 6
             property real fillProgress: 0
 
-            // Fake progress: fast start, slows toward ~88 %, waits for real completion
+            // Feikkiprogressi: nopea alku, sitten odotellaan oikeaa valmistumista.
             SequentialAnimation on fillProgress {
                 running: true
                 NumberAnimation { to: 0.42; duration: 1100; easing.type: Easing.OutCubic }
@@ -39,14 +39,14 @@ WizardFrame {
                 NumberAnimation { to: 0.88; duration: 4500; easing.type: Easing.OutCubic }
             }
 
-            // Track
+            // Tausta.
             Rectangle {
                 anchors.fill: parent
                 radius: 3
                 color: "#dce8e2"
             }
 
-            // Fill
+            // Täyttö.
             Rectangle {
                 id: fill
                 height: parent.height
@@ -55,7 +55,7 @@ WizardFrame {
                 color: "#44896a"
                 clip: true
 
-                // Shimmer sweep
+                // Pieni kiilto.
                 Rectangle {
                     id: shimmer
                     width: 72; height: parent.height; radius: 3

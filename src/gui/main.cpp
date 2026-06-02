@@ -15,7 +15,7 @@
 
 int main(int argc, char* argv[])
 {
-    // --install must run before QGuiApplication — no display available under sudo
+    // --install ajetaan ennen QGuiApplicationia, sudolla ei välttämättä ole näyttöä.
     for (int i = 1; i < argc; ++i) {
         if (qstrcmp(argv[i], "--install") == 0) {
             QCoreApplication app(argc, argv);
@@ -35,9 +35,8 @@ int main(int argc, char* argv[])
 
     QQuickStyle::setStyle(QStringLiteral("Fusion"));
 
-    // Force a consistent light palette for now. The setup user is a synthetic
-    // account whose environment may not reflect any real user preference.
-    // TODO: replace with palette-aware QML colors when dark theme is added.
+    // Pakotetaan vaalea paletti. Setup-käyttäjän teema ei kerro oikeasta käyttäjästä.
+    // TODO: vaihda palettipohjaisiin QML-väreihin kun tumma teema joskus tehdään.
     QPalette palette;
     palette.setColor(QPalette::Window,          QColor{0xf7, 0xf4, 0xef});
     palette.setColor(QPalette::WindowText,      QColor{0x26, 0x32, 0x38});
@@ -69,17 +68,15 @@ int main(int argc, char* argv[])
             qWarning().noquote() << warning.toString();
         }
     });
-    // Retranslate all qsTr() bindings when UI language changes
+    // Ajetaan qsTr()-bindingit uusiksi kun UI-kieli vaihtuu.
     QObject::connect(&controller, &OemSetupController::uiLanguageChanged,
                      &engine,     &QQmlApplicationEngine::retranslate);
 
-    // AppImage deployments with Qt 6.4 may not have QML embedded in QRC.
-    // Add the installed usr/qml/ path as a fallback import root.
+    // Qt 6.4 AppImagessa QML ei aina ole QRC:ssä, joten lisätään usr/qml varalle.
     engine.addImportPath(QDir::cleanPath(
         QCoreApplication::applicationDirPath() + "/../qml"));
 
-    // Prefer QRC (fast, AOT) when available; fall back to filesystem module
-    // installed at usr/qml/OemSetup/ (AppImage / system package deployment).
+    // QRC ensin jos löytyy, muuten tiedostojärjestelmän QML-moduuli.
     const QString qrcRelPath = QStringLiteral("/qt/qml/OemSetup/qml/Main.qml");
     const QUrl mainUrl = QFile::exists(QLatin1Char(':') + qrcRelPath)
         ? QUrl(QStringLiteral("qrc") + qrcRelPath)

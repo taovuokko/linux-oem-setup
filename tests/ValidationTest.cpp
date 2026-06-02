@@ -6,7 +6,7 @@ class ValidationTest : public QObject {
     Q_OBJECT
 
 private slots:
-    // deriveUsername
+    // Käyttäjätunnuksen johtaminen
     void deriveUsername_finnishFirstName();
     void deriveUsername_fullNameUsesFirstWordOnly();
     void deriveUsername_finnishCharsTransliterated();
@@ -14,7 +14,7 @@ private slots:
     void deriveUsername_emptyInput();
     void deriveUsername_maxLength();
 
-    // validateDisplayName
+    // Näyttönimen validointi
     void validateDisplayName_valid();
     void validateDisplayName_emptyFails();
     void validateDisplayName_colonFails();
@@ -23,7 +23,7 @@ private slots:
     void validateDisplayName_controlCharFails();
     void validateDisplayName_bidiOverrideFails();
 
-    // validateUsername
+    // Käyttäjätunnuksen validointi
     void validateUsername_valid();
     void validateUsername_startsWithDigitFails();
     void validateUsername_uppercaseFails();
@@ -31,7 +31,7 @@ private slots:
     void validateUsername_maxLengthAllowed();
     void validateUsername_withHyphenAndUnderscore();
 
-    // validateLocale
+    // Localen validointi
     void validateLocale_knownLocalesAccepted();
     void validateLocale_unknownFails();
 };
@@ -55,9 +55,9 @@ void ValidationTest::deriveUsername_finnishCharsTransliterated()
 
 void ValidationTest::deriveUsername_stripsNonAscii()
 {
-    // Dots and other punctuation are stripped; digits and a-z are kept
+    // Pisteet ja muu sälä pois, numerot ja a-z jäävät.
     QCOMPARE(OemSetup::deriveUsername(QStringLiteral("user.name")), QStringLiteral("username"));
-    // Digits are valid in a username — they are kept, not stripped
+    // Numerot ovat käyttäjätunnuksessa ok.
     QCOMPARE(OemSetup::deriveUsername(QStringLiteral("123abc")), QStringLiteral("123abc"));
 }
 
@@ -68,7 +68,7 @@ void ValidationTest::deriveUsername_emptyInput()
 
 void ValidationTest::deriveUsername_maxLength()
 {
-    // Very long first name should be capped at 32 characters
+    // Pitkä nimi katkaistaan 32 merkkiin.
     const QString longName(40, u'a');
     QCOMPARE(OemSetup::deriveUsername(longName).length(), 32);
 }
@@ -105,13 +105,13 @@ void ValidationTest::validateDisplayName_tooLongFails()
 void ValidationTest::validateDisplayName_controlCharFails()
 {
     QVERIFY(!OemSetup::validateDisplayName(QStringLiteral("name\x01")).ok);
-    // Trailing \n is stripped by trimmed() so it passes — mid-string \n is the real risk
+    // Lopun \n lähtee trimmedillä, keskellä se on se oikea ongelma.
     QVERIFY(!OemSetup::validateDisplayName(QStringLiteral("na\nme")).ok);
 }
 
 void ValidationTest::validateDisplayName_bidiOverrideFails()
 {
-    // U+202E RIGHT-TO-LEFT OVERRIDE — a spoofing risk
+    // U+202E on bidi-ohjausmerkki, eli pieni spoofausriski.
     const QString nameWithBidi = QStringLiteral("name") + QChar(0x202E);
     QVERIFY(!OemSetup::validateDisplayName(nameWithBidi).ok);
 }
@@ -146,7 +146,7 @@ void ValidationTest::validateUsername_maxLengthAllowed()
 
 void ValidationTest::validateUsername_withHyphenAndUnderscore()
 {
-    // Hyphen and underscore are allowed but not as the first character
+    // Väliviiva ja alaviiva käyvät, mutta eivät ekaksi merkiksi.
     QVERIFY(OemSetup::validateUsername(QStringLiteral("a-b_c")).ok);
     QVERIFY(!OemSetup::validateUsername(QStringLiteral("-user")).ok);
     QVERIFY(!OemSetup::validateUsername(QStringLiteral("_user")).ok);

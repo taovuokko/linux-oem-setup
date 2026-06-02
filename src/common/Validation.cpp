@@ -30,7 +30,7 @@ QString stripCombiningMarks(const QString& value)
     return output;
 }
 
-} // namespace
+}
 
 QString deriveUsername(const QString& displayName)
 {
@@ -109,4 +109,4 @@ ValidationResult validateLocale(const QString& locale)
     return {true, {}};
 }
 
-} // namespace OemSetup
+}

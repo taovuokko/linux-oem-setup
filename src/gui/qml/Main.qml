@@ -14,7 +14,7 @@ ApplicationWindow {
     flags: Qt.FramelessWindowHint
     color: "transparent"
 
-    // Drag anywhere on non-interactive area to move the frameless window
+    // Ikkunaa voi raahata tyhjistä kohdista.
     Item {
         anchors.fill: parent
         z: -1

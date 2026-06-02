@@ -14,4 +14,4 @@ ValidationResult validateDisplayName(const QString& displayName);
 ValidationResult validateUsername(const QString& username);
 ValidationResult validateLocale(const QString& locale);
 
-} // namespace OemSetup
+}
