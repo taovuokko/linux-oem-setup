@@ -1,6 +1,6 @@
-# Development
+# Kehitys
 
-This project is developed with a project-local Nix shell.
+Projektia kehitetään repo-kohtaisessa Nix-shellissä.
 
 ```bash
 nix develop
@@ -9,10 +9,11 @@ just run
 just check
 ```
 
-Do not rely on host C++ headers or libraries. Add C++ and Qt dependencies to
-`flake.nix` and link them in CMake.
+Älä nojaa hostin C++-headereihin tai kirjastoihin. Lisää C++/Qt-riippuvuudet
+`flake.nix`:iin ja linkitä ne CMakeen.
 
-The first GUI milestone uses a mock backend. Production root behavior belongs in
-`src/helper`, not in QML or GUI controller code.
+GUI:ssa on mock-tila paikallista ajamista varten. Tuotannon root-toiminnot ovat
+skripteissä `data/scripts/oem-apply.sh` ja `data/scripts/oem-cleanup.sh`, eivät
+QML:ssä tai GUI-controllerissa.
 
-Coding and formatting rules are documented in `docs/coding-style.md`.
+Koodityyli ja tarkemmat säännöt ovat tiedostossa `docs/coding-style.md`.

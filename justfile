@@ -14,13 +14,10 @@ build: configure
 run: build
     ./{{build_dir}}/src/gui/oem-setup-gui --mock
 
-helper-check: build
-    printf '{"displayName":"Matti Meikäläinen","username":"matti","locale":"fi_FI.UTF-8"}\n' | ./{{build_dir}}/src/helper/oem-setup-helper --validate-only
-
 test: build
     ctest --test-dir {{build_dir}} --output-on-failure
 
-check: build helper-check test
+check: build test
 
 clean:
     cmake -E rm -rf {{build_dir}}

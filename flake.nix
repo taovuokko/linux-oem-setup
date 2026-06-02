@@ -3,11 +3,9 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nix-appimage.url = "github:ralismark/nix-appimage";
-    nix-appimage.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, nix-appimage }:
+  outputs = { self, nixpkgs }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
@@ -48,8 +46,6 @@
         in
         {
           inherit default;
-
-          appimage = nix-appimage.bundlers.${system}.default default;
         });
     };
 }

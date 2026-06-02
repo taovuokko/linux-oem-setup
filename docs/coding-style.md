@@ -224,7 +224,7 @@ Security-sensitive ordering deserves comments. Ordinary syntax does not.
 Every non-trivial backend change should have one of:
 
 - a unit test,
-- a helper validation test,
+- a script or validation test,
 - a VM/manual test note in `docs/test-matrix.md`.
 
 Before handing off changes, run:

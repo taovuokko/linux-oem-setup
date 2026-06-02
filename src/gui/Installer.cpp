@@ -19,8 +19,8 @@ static int fail(const QString& msg)
 
 static QString appBaseDir()
 {
-    // nix-appimage pitää tiedostot Nix store -poluissa, ei $APPDIR/usr:n alla.
-    // applicationDirPath()/.. osuu silti samaan prefiksiin myös CMake-installissa.
+    // AppImagessa ja CMake-installissa binääri on prefix/bin:n alla.
+    // Yksi ".." vie takaisin samaan prefiksiin.
     return QCoreApplication::applicationDirPath() + "/..";
 }
 
