@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install dependencies
         run: |
@@ -69,6 +69,61 @@ jobs:
             --appdir AppDir \
             --plugin qt \
             --output appimage
+
+      - name: Smoke-test AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          app="oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage"
+          chmod +x "$app"
+          set +e
+          timeout 5 ./"$app" --mock
+          rc=$?
+          set -e
+          if [[ "$rc" != 0 && "$rc" != 124 ]]; then
+            echo "AppImage mock smoke test failed with exit code $rc" >&2
+            exit "$rc"
+          fi
+
+      - name: Verify AppImage contents
+        run: |
+          app="oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage"
+          rm -rf squashfs-root
+          ./"$app" --appimage-extract >/dev/null
+
+          test -x squashfs-root/usr/bin/oem-setup-gui
+          test -f squashfs-root/usr/qml/OemSetup/qmldir
+          test -x squashfs-root/usr/libexec/oem-setup/oem-apply.sh
+          test -x squashfs-root/usr/libexec/oem-setup/oem-cleanup.sh
+          test -f squashfs-root/usr/share/polkit-1/actions/fi.local.oem-setup.policy
+          test -f squashfs-root/usr/lib/systemd/system/oem-cleanup.service
+          test -e squashfs-root/usr/lib/libOpenGL.so.0 || \
+            test -e squashfs-root/usr/lib/libOpenGL.so.0.0.0
+
+      - name: Write job summary
+        run: |
+          app="oem-setup-linux-${{ github.ref_name }}-x86_64.AppImage"
+          size="$(du -h "$app" | cut -f1)"
+          sha="$(sha256sum "$app" | cut -d' ' -f1)"
+
+          {
+            echo "## AppImage"
+            echo
+            echo "- Tiedosto: \`$app\`"
+            echo "- Koko: \`$size\`"
+            echo "- SHA256: \`$sha\`"
+            echo
+            echo "## Tarkistukset"
+            echo
+            echo "- Mock-savutesti: ok"
+            echo "- QML-moduuli: ok"
+            echo "- Helper-skriptit: ok"
+            echo "- Polkit-policy: ok"
+            echo "- Cleanup-service: ok"
+            echo "- libOpenGL: ok"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
