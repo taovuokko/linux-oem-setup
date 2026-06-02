@@ -33,7 +33,6 @@ jobs:
         run: |
           bash -n data/scripts/oem-apply.sh
           bash -n data/scripts/oem-cleanup.sh
-          bash -n build-appimage.sh
           ! git grep -nI '[[:blank:]]$' -- . ':!*.svg' ':!translations/*.ts'
 
       - name: Build
