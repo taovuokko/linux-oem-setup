@@ -81,7 +81,7 @@ WizardFrame {
 
         Label {
             Layout.fillWidth: true
-            text: qsTr("Tarvitsen nimesi, kielivalinnan ja salasanan. Sen jälkeen tietokone viimeistelee asetukset ja käynnistyy uudelleen.")
+            text: qsTr("Valitse nimi, kieli ja salasana. Sen jälkeen tietokone viimeistelee asetukset ja käynnistyy uudelleen.")
             wrapMode: Text.WordWrap
             color: "#34403f"
             font.pixelSize: 19

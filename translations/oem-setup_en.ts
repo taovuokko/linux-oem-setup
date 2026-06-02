@@ -23,8 +23,8 @@
         <translation>Let&apos;s get your computer ready in just a few steps.</translation>
     </message>
     <message>
-        <source>Tarvitsen nimesi, kielivalinnan ja salasanan. Sen jälkeen tietokone viimeistelee asetukset ja käynnistyy uudelleen.</source>
-        <translation>I&apos;ll need your name, a language choice, and a password. After that, the computer will finish the setup and restart.</translation>
+        <source>Valitse nimi, kieli ja salasana. Sen jälkeen tietokone viimeistelee asetukset ja käynnistyy uudelleen.</source>
+        <translation>Choose a name, language, and password. After that, the computer will finish the setup and restart.</translation>
     </message>
     <message>
         <source>Aloitetaan</source>
@@ -34,8 +34,8 @@
 <context>
     <name>NamePage</name>
     <message>
-        <source>Henkilötiedot</source>
-        <translation>Personal details</translation>
+        <source>Käyttäjätiedot</source>
+        <translation>User details</translation>
     </message>
     <message>
         <source>Kuka käyttää tätä tietokonetta?</source>
@@ -140,8 +140,8 @@
         <translation>Enter the same password</translation>
     </message>
     <message>
-        <source>Salasanaa ei pakoteta tiettyyn pituuteen.</source>
-        <translation>No minimum password length is required.</translation>
+        <source>Voit käyttää lyhyttä tai pitkää salasanaa.</source>
+        <translation>You can use a short or long password.</translation>
     </message>
     <message>
         <source>Takaisin</source>
@@ -159,8 +159,8 @@
         <translation>Summary</translation>
     </message>
     <message>
-        <source>Tarkista tiedot</source>
-        <translation>Review your details</translation>
+        <source>Tarkista asetukset</source>
+        <translation>Review your settings</translation>
     </message>
     <message>
         <source>Kun jatkat, käyttäjä luodaan ja väliaikainen setup-tila poistetaan.</source>

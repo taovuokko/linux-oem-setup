@@ -29,7 +29,7 @@ WizardFrame {
             Layout.fillWidth: true
             label: qsTr("Salasana uudelleen")
             placeholderText: qsTr("Kirjoita sama salasana")
-            supportingText: qsTr("Salasanaa ei pakoteta tiettyyn pituuteen.")
+            supportingText: qsTr("Voit käyttää lyhyttä tai pitkää salasanaa.")
             showToggle: true
             text: oemSetup.passwordConfirmation
             onTextChanged: oemSetup.passwordConfirmation = text

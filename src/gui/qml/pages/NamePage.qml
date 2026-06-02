@@ -5,7 +5,7 @@ import "../components"
 import "../animations"
 
 WizardFrame {
-    eyebrow: qsTr("Henkilötiedot")
+    eyebrow: qsTr("Käyttäjätiedot")
     title: qsTr("Kuka käyttää tätä tietokonetta?")
     subtitle: qsTr("Nimi näkyy kirjautumisruudussa ja käyttäjäasetuksissa.")
     illustrationComponent: Component { NameAnimation {} }

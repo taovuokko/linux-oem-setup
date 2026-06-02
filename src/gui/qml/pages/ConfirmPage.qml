@@ -5,7 +5,7 @@ import "../components"
 
 WizardFrame {
     eyebrow: qsTr("Yhteenveto")
-    title: qsTr("Tarkista tiedot")
+    title: qsTr("Tarkista asetukset")
     subtitle: qsTr("Kun jatkat, käyttäjä luodaan ja väliaikainen setup-tila poistetaan.")
     illustration: "../assets/done.svg"
     step: 3
