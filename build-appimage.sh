@@ -53,6 +53,11 @@ cp -r build/src/gui/OemSetup/qml AppDir/usr/qml/OemSetup/
 find build/src/gui -name "liboem-setup-guiplugin.so" \
   -exec cp {} AppDir/usr/qml/OemSetup/ \; 2>/dev/null || true
 
+# Force-bundle libOpenGL.so.0 — linuxdeploy treats it as a system GL
+# library and excludes it, but a minimal Ubuntu install may not have it.
+mkdir -p AppDir/usr/lib
+find /usr/lib -name "libOpenGL.so*" -exec cp -Pv {} AppDir/usr/lib/ \;
+
 echo "==> AppDir/usr/qml/OemSetup/ contents:"
 find AppDir/usr/qml/OemSetup -type f | sort
 
