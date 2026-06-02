@@ -16,17 +16,21 @@ fi
 
 # Remove lines starting with given prefixes from a config file (in-place).
 # Returns 0 if file doesn't exist.
+# Uses cat-redirect instead of mv so SELinux context and ownership are preserved.
 filter_file() {
     local file="$1"; shift
     [[ -f "$file" ]] || return 0
-    local tmp
+    local tmp sed_expr=""
     tmp=$(mktemp) || return 1
-    local sed_expr=""
     for prefix in "$@"; do
         sed_expr="${sed_expr}/^[[:blank:]]*${prefix}/d;"
     done
-    sed "$sed_expr" "$file" > "$tmp" || { rm -f "$tmp"; return 1; }
-    mv "$tmp" "$file" || return 1
+    if ! sed "$sed_expr" "$file" > "$tmp"; then
+        rm -f "$tmp"; return 1
+    fi
+    cat "$tmp" > "$file"; local rc=$?
+    rm -f "$tmp"
+    return $rc
 }
 
 remove_autologin() {

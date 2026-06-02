@@ -29,17 +29,21 @@ IFS= read -r PASSWORD || true
 
 # Remove lines starting with given prefixes from a config file (in-place).
 # Returns 0 if file doesn't exist (nothing to filter).
+# Uses cat-redirect instead of mv so SELinux context and ownership are preserved.
 filter_file() {
     local file="$1"; shift
     [[ -f "$file" ]] || return 0
-    local tmp
+    local tmp sed_expr=""
     tmp=$(mktemp) || return 1
-    local sed_expr=""
     for prefix in "$@"; do
         sed_expr="${sed_expr}/^[[:blank:]]*${prefix}/d;"
     done
-    sed "$sed_expr" "$file" > "$tmp" || { rm -f "$tmp"; return 1; }
-    mv "$tmp" "$file" || return 1
+    if ! sed "$sed_expr" "$file" > "$tmp"; then
+        rm -f "$tmp"; return 1
+    fi
+    cat "$tmp" > "$file"; local rc=$?
+    rm -f "$tmp"
+    return $rc
 }
 
 remove_autologin() {
@@ -64,14 +68,11 @@ if id "$USERNAME" &>/dev/null; then
     die "käyttäjä on jo olemassa: $USERNAME"
 fi
 
-# Create user (prefer adduser for --gecos support, fall back to useradd)
-if command -v adduser &>/dev/null; then
-    adduser --gecos "$DISPLAY_NAME" --disabled-password "$USERNAME" \
-        || die "käyttäjän luominen epäonnistui"
-else
-    useradd -m -c "$DISPLAY_NAME" -s /bin/bash "$USERNAME" \
-        || die "käyttäjän luominen epäonnistui"
-fi
+# Create user — useradd is portable across all distros.
+# (Debian's adduser is not used: on Fedora/Arch it is a useradd symlink that
+# rejects --gecos and --disabled-password.)
+useradd -m -c "$DISPLAY_NAME" -s /bin/bash "$USERNAME" \
+    || die "käyttäjän luominen epäonnistui"
 
 # Set password via chpasswd stdin (password never on argv)
 if ! printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd; then
