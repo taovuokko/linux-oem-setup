@@ -45,6 +45,3 @@ install(PROGRAMS
     DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/oem-setup
 )
 
-install(FILES data/config/oem-setup.conf
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/oem-setup
-)
