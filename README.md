@@ -1,60 +1,53 @@
-# OEM Setup
+# oem-setup-linux
 
-Pieni OEM‑käyttöönottoavustin distroille, joista puuttuu valmis OEM‑asennus.  
+Qt6/QML-pohjainen käyttöönottoavustin Linuxille. Tarkoitettu tilanteisiin joissa laitteeseen pitää tehdä OEM-tyylinen ensikirjautuminen — käyttäjä luo tilinsä, valitsee kielen ja salasanan, kone käynnistyy uudelleen ja setup-tili katoaa.
 
-Ideana on, että käyttäjä luo ensimmäisellä bootilla oman tilinsä ja kielen, ilman ylimääräistä säätöä.
+Toimii ainakin Ubuntulla ja Fedoralla. Todennäköisesti muuallakin.
 
-## Seuraavan sukupolven versio
+## Miten tämä toimii
 
-Repoon on aloitettu C++/Qt/QML-pohjainen tuotetason versio nykyisen
-bash/zenity-toteutuksen rinnalle.
+1. OEM-vaiheessa ajetaan `oem-setup-gui --install setup` rootina — se kopioi binäärin, skriptit ja polkit-policyn oikeisiin paikkoihin, ja kirjoittaa autostart-tiedoston setup-käyttäjälle.
+2. Järjestelmä käynnistetään → setup-käyttäjä kirjautuu automaattisesti → wizard aukeaa.
+3. Käyttäjä täyttää nimen, kielen ja salasanan → "Ota käyttöön" → `pkexec oem-apply.sh` luo tilin rootina.
+4. Kone käynnistyy uudelleen → `oem-cleanup.service` poistaa setup-tilin ja kaikki OEM-tiedostot.
 
-Nykyinen kehitysrakenne:
+## Rakenne
 
-* `src/gui` — Qt/QML wizard mock-backendillä
-* `src/helper` — tuleva root-helper, nyt validointi- ja protokollastubina
-* `src/common` — jaettu syötevalidointi
-* `data` — desktop-, polkit-, systemd- ja oletuskonfiguraatiot
-* `docs` — arkkitehtuuri-, koodaustyyli-, tietoturva- ja testausmuistiot
+```
+src/gui/       Qt6/QML wizard + Installer.cpp
+src/common/    validointi (jaettu GUI:n ja testien välillä)
+data/scripts/  oem-apply.sh, oem-cleanup.sh
+data/polkit/   pkexec-policy
+data/systemd/  oem-cleanup.service
+```
 
-Kehitys tapahtuu Nix-kehitysympäristössä:
+## Kehitys
+
+Nix-ympäristö, mutta toimii myös ilman:
 
 ```bash
 nix develop
 just build
 just run
-just check
 ```
 
-Ensimmäinen C++-milestone keskittyy GUI/UX-polkuun. Root-toiminnot portataan
-myöhemmin helperiin nykyisestä `usr/local/sbin/oem-setup-apply.sh`-logiikasta.
+Tai suoraan CMakella jos Qt6 on asennettuna:
 
-## Käyttö
-1. Kopioi `oem-setup` asennettuun järjestelmään.
-2. Siirry kansioon:
+```bash
+cmake -B build -G Ninja && cmake --build build
+./build/src/gui/oem-setup-gui --mock
+```
 
-   ```bash
-   cd oem-setup
-   ```
-3. Aja asennus:
+`--mock` skippaa oikeat root-toiminnot, hyvä UI-testaukseen.
 
-   ```bash
-   sudo ./install.sh
-   ```
-4. Käynnistä kone uudelleen.
+## Asennus kohdelaitteeseen
 
-Ensimmäisellä bootilla:
+```bash
+sudo ./build/src/gui/oem-setup-gui --install setup
+```
 
-* `setup`-käyttäjä kirjautuu automaattisesti
-* käyttöönottoavustin käynnistyy
-* käyttäjä luo oman tilinsä
-* kone käynnistyy uudelleen
-* `setup`-tili ja OEM-tiedostot poistuvat automaattisesti
+Sen jälkeen ota image ja levitä. Tai käynnistä suoraan uudelleen.
 
 ## Tuetut distrot
-- Fedora‑pohjaiset (Fedora, Nobara tms.)
-- Arch‑pohjaiset (EndeavourOS, CachyOS, Manjaro, Garuda)
-- Muut → generinen polku (Debian/Ubuntu‑tyyliset)
 
-
-Jos puuttuvia paketteja löytyy, asennus yrittää asentaa ne ja kertoo lopuksi mikä jäi puuttumaan.
+Ubuntu, Fedora, Arch-pohjaiset. Kielipaketti kannattaa asentaa etukäteen jos haluaa lokalisoidut XDG-kansiot (Lataukset jne.) — wizard asettaa localen mutta ei asenna kielipaketteja.
