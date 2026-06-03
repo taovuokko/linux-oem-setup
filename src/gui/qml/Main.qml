@@ -11,8 +11,13 @@ ApplicationWindow {
     minimumHeight: 540
     visible: true
     title: qsTr("OEM Setup")
-    flags: Qt.FramelessWindowHint
+    flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
+
+    onVisibilityChanged: {
+        if (visibility === Window.Minimized)
+            showNormal()
+    }
 
     // Ikkunaa voi raahata tyhjistä kohdista.
     Item {

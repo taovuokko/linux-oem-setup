@@ -84,6 +84,7 @@ rmdir /etc/oem-setup 2>/dev/null || true
 rm -f /etc/polkit-1/actions/fi.local.oem-setup.policy
 rm -f "/var/lib/AccountsService/users/$SETUP_USER"
 rm -f /usr/bin/oem-setup-gui
+rm -f /usr/bin/oem-setup-run
 rm -f /usr/libexec/oem-setup/oem-apply.sh
 # Poistetaan tämä skripti vasta lopussa. Linux pitää ajossa olevan fd:n auki.
 rm -f /usr/libexec/oem-setup/oem-cleanup.sh

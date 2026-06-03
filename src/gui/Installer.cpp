@@ -118,27 +118,65 @@ int install(const QString& setupUser)
                    dataPerms))
         return 1;
 
-    // Autostart setup-käyttäjälle.
-    // AppImage tarvitsee tämän jos FUSE puuttuu.
-    const QString execLine = appImagePath.isEmpty()
-        ? QStringLiteral("Exec=/usr/bin/oem-setup-gui")
-        : QStringLiteral("Exec=/usr/bin/oem-setup-gui --appimage-extract-and-run");
+    // Wrapper: tarkistaa onko setup valmis ja onko wizard jo käynnissä,
+    // sitten käynnistää wizardin systemd-inhibitin kautta.
+    const QString guiExec = appImagePath.isEmpty()
+        ? QStringLiteral("/usr/bin/oem-setup-gui")
+        : QStringLiteral("/usr/bin/oem-setup-gui --appimage-extract-and-run");
+    if (!writeFile(QStringLiteral("/usr/bin/oem-setup-run"),
+                   "#!/bin/bash\n"
+                   "[ -f /etc/oem-setup/oem-setup.conf ] || exit 0\n"
+                   "pgrep -x oem-setup-gui > /dev/null && exit 0\n"
+                   "exec systemd-inhibit"
+                   " --what=sleep:handle-lid-switch:handle-power-key:idle"
+                   " --why=OEM-kayttoonotto --who=oem-setup-gui "
+                   + guiExec + "\n",
+                   execPerms))
+        return 1;
+
+    // Autostart setup-käyttäjälle (fallback jos systemd --user ei käynnisty).
     const QString autostartDir = "/home/" + setupUser + "/.config/autostart";
     if (!writeFile(autostartDir + "/oem-setup.desktop",
                    "[Desktop Entry]\n"
                    "Type=Application\n"
                    "Name=OEM Setup\n"
-                   + execLine + "\n"
+                   "Exec=/usr/bin/oem-setup-run\n"
                    "X-GNOME-Autostart-enabled=true\n"
                    "NoDisplay=true\n",
                    QFile::ReadOwner | QFile::WriteOwner |
                    QFile::ReadGroup | QFile::ReadOther))
         return 1;
 
+    // Systemd user service: käynnistää wrapperin ja respawnaa kaatumisen jälkeen.
+    const QString serviceDir = "/home/" + setupUser + "/.config/systemd/user";
+    if (!writeFile(serviceDir + "/oem-setup.service",
+                   "[Unit]\n"
+                   "Description=OEM Setup wizard\n"
+                   "\n"
+                   "[Service]\n"
+                   "Type=simple\n"
+                   "ExecStart=/usr/bin/oem-setup-run\n"
+                   "Restart=always\n"
+                   "RestartSec=3\n"
+                   "\n"
+                   "[Install]\n"
+                   "WantedBy=default.target\n",
+                   QFile::ReadOwner | QFile::WriteOwner |
+                   QFile::ReadGroup | QFile::ReadOther))
+        return 1;
+
+    // Enable-symlinkki (vastaa systemctl --user enable).
+    const QString wantsDir = serviceDir + "/default.target.wants";
+    QDir().mkpath(wantsDir);
+    const QString symlinkPath = wantsDir + "/oem-setup.service";
+    QFile::remove(symlinkPath);
+    if (!QFile::link(QStringLiteral("../oem-setup.service"), symlinkPath))
+        return fail("systemd user service -symlinkin luonti epäonnistui");
+
     if (QProcess::execute(QStringLiteral("chown"), {QStringLiteral("-R"),
             setupUser + u':' + setupUser,
             "/home/" + setupUser + "/.config"}) != 0)
-        return fail("chown epäonnistui autostart-hakemistolle");
+        return fail("chown epäonnistui .config-hakemistolle");
 
     if (QProcess::execute(QStringLiteral("systemctl"), {QStringLiteral("daemon-reload")}) != 0)
         return fail("systemctl daemon-reload epäonnistui");
