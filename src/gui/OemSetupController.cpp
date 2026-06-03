@@ -208,6 +208,9 @@ bool OemSetupController::apply()
 
     connect(m_helperProcess, &QProcess::finished, this,
             [this](int exitCode, QProcess::ExitStatus exitStatus) {
+        const QString stderrOutput = QString::fromUtf8(
+            m_helperProcess->readAllStandardError()).trimmed();
+
         m_helperProcess->deleteLater();
         m_helperProcess = nullptr;
 
@@ -220,8 +223,10 @@ bool OemSetupController::apply()
             emit applySucceeded();
         } else {
             setError(tr("Käyttöönotto epäonnistui"),
-                     tr("Tilin luominen ei onnistunut. "
-                        "Tarkista, että sinulla on riittävät oikeudet."));
+                     stderrOutput.isEmpty()
+                         ? tr("Tilin luominen ei onnistunut. "
+                              "Tarkista, että sinulla on riittävät oikeudet.")
+                         : stderrOutput);
             emit applyRuntimeFailed();
         }
     });
