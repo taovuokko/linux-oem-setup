@@ -156,7 +156,7 @@ int install(const QString& setupUser)
                    "[Service]\n"
                    "Type=simple\n"
                    "ExecStart=/usr/bin/oem-setup-run\n"
-                   "Restart=always\n"
+                   "Restart=on-failure\n"
                    "RestartSec=3\n"
                    "\n"
                    "[Install]\n"
