@@ -127,6 +127,7 @@ int install(const QString& setupUser)
                    "#!/bin/bash\n"
                    "[ -f /etc/oem-setup/oem-setup.conf ] || exit 42\n"
                    "[ -f /tmp/oem-setup-done ] && exit 42\n"
+                   "[ -n \"$DISPLAY\" ] || [ -n \"$WAYLAND_DISPLAY\" ] || exit 0\n"
                    "exec 9>/tmp/oem-setup-gui.lock\n"
                    "flock -n 9 || exit 0\n"
                    "if command -v systemd-inhibit >/dev/null 2>&1; then\n"

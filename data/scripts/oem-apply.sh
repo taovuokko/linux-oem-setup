@@ -98,6 +98,7 @@ rollback() {
     loginctl terminate-user "$USERNAME" 2>/dev/null || true
     userdel --force -r "$USERNAME" 2>/dev/null || true
     groupdel "$USERNAME" 2>/dev/null || true
+    rm -f "${INFLIGHT:-/etc/oem-setup/.apply-in-progress}"
 }
 
 # Ei yliajeta olemassa olevaa käyttäjää.
@@ -105,10 +106,20 @@ if id "$USERNAME" &>/dev/null; then
     die "käyttäjä on jo olemassa: $USERNAME"
 fi
 
+INFLIGHT=/etc/oem-setup/.apply-in-progress
+if [[ -f "$INFLIGHT" ]]; then
+    PREV=$(cat "$INFLIGHT" 2>/dev/null || true)
+    [[ -n "$PREV" ]] && userdel --force -r "$PREV" 2>/dev/null || true
+    rm -f "$INFLIGHT"
+fi
+echo "$USERNAME" > "$INFLIGHT"
+
 # useradd on tylsä mutta kulkee distrosta toiseen.
 # Debianin adduser ei käy, Fedorassa/Archissa se voi olla useradd-symlinkki
 # eikä tue samoja optioita.
-useradd -m -c "$DISPLAY_NAME" -s /bin/bash "$USERNAME" \
+SHELL_PATH=$(command -v bash 2>/dev/null)
+[[ -x "$SHELL_PATH" ]] || SHELL_PATH=/bin/sh
+useradd -m -c "$DISPLAY_NAME" -s "$SHELL_PATH" "$USERNAME" \
     || die "käyttäjän luominen epäonnistui"
 
 # Salasana chpasswdille stdinistä, ettei se näy prosessilistassa.
@@ -163,4 +174,5 @@ fi
 remove_autologin && autologin_gone \
     || echo "oem-apply: varoitus: autologinin poisto epäonnistui osin, cleanup-palvelu yrittää uudelleen" >&2
 
+rm -f "$INFLIGHT"
 echo "ok"
