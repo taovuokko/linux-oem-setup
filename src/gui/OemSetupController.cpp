@@ -3,6 +3,8 @@
 #include "Validation.h"
 
 #include <QCoreApplication>
+#include <QFile>
+#include <QIODevice>
 #include <QMap>
 #include <QProcess>
 
@@ -274,6 +276,7 @@ void OemSetupController::reboot()
         QCoreApplication::quit();
         return;
     }
+    { QFile f(QStringLiteral("/tmp/oem-setup-done")); (void)f.open(QIODevice::WriteOnly); }
     QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("reboot")});
     QCoreApplication::quit();
 }

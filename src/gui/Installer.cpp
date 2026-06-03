@@ -126,6 +126,7 @@ int install(const QString& setupUser)
     if (!writeFile(QStringLiteral("/usr/bin/oem-setup-run"),
                    "#!/bin/bash\n"
                    "[ -f /etc/oem-setup/oem-setup.conf ] || exit 0\n"
+                   "[ -f /tmp/oem-setup-done ] && exit 42\n"
                    "pgrep -x oem-setup-gui > /dev/null && exit 0\n"
                    "exec systemd-inhibit"
                    " --what=sleep:handle-lid-switch:handle-power-key:idle"
@@ -156,8 +157,9 @@ int install(const QString& setupUser)
                    "[Service]\n"
                    "Type=simple\n"
                    "ExecStart=/usr/bin/oem-setup-run\n"
-                   "Restart=on-failure\n"
-                   "RestartSec=3\n"
+                   "Restart=always\n"
+                   "RestartPreventExitStatus=42\n"
+                   "RestartSec=5\n"
                    "\n"
                    "[Install]\n"
                    "WantedBy=default.target\n",
