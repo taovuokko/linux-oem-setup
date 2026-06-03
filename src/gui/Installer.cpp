@@ -129,10 +129,14 @@ int install(const QString& setupUser)
                    "[ -f /tmp/oem-setup-done ] && exit 42\n"
                    "exec 9>/tmp/oem-setup-gui.lock\n"
                    "flock -n 9 || exit 0\n"
-                   "exec systemd-inhibit"
+                   "if command -v systemd-inhibit >/dev/null 2>&1; then\n"
+                   "    exec systemd-inhibit"
                    " --what=sleep:handle-lid-switch:handle-power-key:idle"
                    " --why=OEM-kayttoonotto --who=oem-setup-gui "
-                   + guiExec + "\n",
+                   + guiExec + "\n"
+                   "else\n"
+                   "    exec " + guiExec + "\n"
+                   "fi\n",
                    execPerms))
         return 1;
 
