@@ -125,7 +125,7 @@ int install(const QString& setupUser)
         : QStringLiteral("/usr/bin/oem-setup-gui --appimage-extract-and-run");
     if (!writeFile(QStringLiteral("/usr/bin/oem-setup-run"),
                    "#!/bin/bash\n"
-                   "[ -f /etc/oem-setup/oem-setup.conf ] || exit 0\n"
+                   "[ -f /etc/oem-setup/oem-setup.conf ] || exit 42\n"
                    "[ -f /tmp/oem-setup-done ] && exit 42\n"
                    "exec 9>/tmp/oem-setup-gui.lock\n"
                    "flock -n 9 || exit 0\n"
